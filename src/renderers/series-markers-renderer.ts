@@ -124,6 +124,9 @@ function drawShape(item: SeriesMarkerRendererDataItem, ctx: CanvasRenderingConte
 		case 'square':
 			drawSquare(ctx, item.x, item.y, item.size);
 			return;
+		case 'vertLine':
+			drawSquare(ctx, item.x, item.y, item.size);
+			return;
 	}
 
 	ensureNever(item.shape);
@@ -150,6 +153,8 @@ function hitTestShape(item: SeriesMarkerRendererDataItem, x: Coordinate, y: Coor
 		case 'circle':
 			return hitTestCircle(item.x, item.y, item.size, x, y);
 		case 'square':
+			return hitTestSquare(item.x, item.y, item.size, x, y);
+		case 'vertLine':
 			return hitTestSquare(item.x, item.y, item.size, x, y);
 	}
 }
