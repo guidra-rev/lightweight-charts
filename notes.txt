@@ -1,0 +1,102 @@
+export class SeriesApi<...>{
+    public setMarkers(data: SeriesMarker<Time>[]): void {
+		...
+
+		const convertedMarkers = data.map<SeriesMarker<TimePoint>>(...)
+		this._series.setMarkers(convertedMarkers);
+	}
+
+    public markers(): SeriesMarker<Time>[] {
+		return this._series.markers().map<SeriesMarker<Time>>(..);
+	}
+}
+
+export class Series<...> {
+    private _markers: readonly SeriesMarker<TimePoint>[] = [];
+	private _indexedMarkers: InternalSeriesMarker<TimePointIndex>[] = [];
+
+    public markers(): readonly SeriesMarker<TimePoint>[] {
+		return this._markers;
+	}
+
+	public indexedMarkers(): InternalSeriesMarker<TimePointIndex>[] {
+		return this._indexedMarkers;
+	}
+
+    private _recalculateMarkers(): void {
+        this._indexedMarkers = this._markers.map(...)
+    }
+
+    public setMarkers(data: readonly SeriesMarker<TimePoint>[]): void {
+		this._markers = data;
+		this._recalculateMarkers();
+		...
+	}
+}
+
+
+export class SeriesMarkersPaneView implements IUpdatablePaneView {
+    protected _makeValid(): void {
+        ...
+		const seriesMarkers = this._series.indexedMarkers();
+        this._data.items = seriesMarkers.map<SeriesMarkerRendererDataItem>(...)
+    }
+
+    public renderer(): IPaneRenderer | null {
+		if (this._invalidated) {
+			this._makeValid();
+		}
+
+		...
+		this._renderer.setData(this._data);
+		return this._renderer;
+	}
+}
+
+export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
+    private _data: SeriesMarkerRendererData | null = null;
+
+    public setData(data: SeriesMarkerRendererData): void {
+		this._data = data;
+	}
+
+    protected _drawImpl({ context: ctx }: MediaCoordinatesRenderingScope, i...): void {
+        ...
+        for (let i = this._data.visibleRange.from; i < this._data.visibleRange.to; i++) {
+			const item = this._data.items[i];
+			...
+			drawItem(item, ctx);
+		}
+    }
+
+    function drawItem(item: SeriesMarkerRendererDataItem, ctx: CanvasRenderingContext2D): void {
+        ctx.fillStyle = item.color;
+
+        if (item.text !== undefined) {
+            drawText(ctx, item.text.content, item.text.x, item.text.y);
+        }
+
+        drawShape(item, ctx);
+    }
+
+        function drawShape(item: SeriesMarkerRendererDataItem, ctx: CanvasRenderingContext2D): void {
+        if (item.size === 0) {
+            return;
+        }
+
+        switch (item.shape) {
+            case 'arrowDown':
+                drawArrow(false, ctx, item.x, item.y, item.size);
+                return;
+            case 'arrowUp':
+                drawArrow(true, ctx, item.x, item.y, item.size);
+                return;
+            case 'circle':
+                drawCircle(ctx, item.x, item.y, item.size);
+                return;
+            case 'square':
+                drawSquare(ctx, item.x, item.y, item.size);
+                return;
+        }
+    }
+}
