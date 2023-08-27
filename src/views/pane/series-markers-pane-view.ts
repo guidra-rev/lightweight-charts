@@ -87,10 +87,12 @@ function fillSizeAndY(
 export class SeriesMarkersPaneView implements IUpdatablePaneView {
 	private readonly _series: ISeries<SeriesType>;
 	private readonly _model: IChartModelBase;
-	private _data: SeriesMarkerRendererData;
+	private _dataMarkers: SeriesMarkerRendererData;
+	private _dataHorizLines: SeriesMarkerRendererData;
 
 	private _invalidated: boolean = true;
-	private _dataInvalidated: boolean = true;
+	private _dataInvalidatedMarkers: boolean = true;
+	private _dataInvalidatedHorizLines: boolean = true;
 	private _autoScaleMarginsInvalidated: boolean = true;
 
 	private _autoScaleMargins: AutoScaleMargins | null = null;
@@ -100,7 +102,11 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 	public constructor(series: ISeries<SeriesType>, model: IChartModelBase) {
 		this._series = series;
 		this._model = model;
-		this._data = {
+		this._dataMarkers = {
+			items: [],
+			visibleRange: null,
+		};
+		this._dataHorizLines = {
 			items: [],
 			visibleRange: null,
 		};
@@ -110,7 +116,8 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 		this._invalidated = true;
 		this._autoScaleMarginsInvalidated = true;
 		if (updateType === 'data') {
-			this._dataInvalidated = true;
+			this._dataInvalidatedMarkers = true;
+			this._dataInvalidatedHorizLines = true;
 		}
 	}
 
@@ -125,7 +132,8 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 
 		const layout = this._model.options().layout;
 		this._renderer.setParams(layout.fontSize, layout.fontFamily);
-		this._renderer.setData(this._data);
+		this._renderer.setDataMarkers(this._dataMarkers);
+		this._renderer.setDataHorizLines(this._dataHorizLines);
 
 		return this._renderer;
 	}
@@ -150,12 +158,12 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 		return this._autoScaleMargins;
 	}
 
-	protected _makeValid(): void {
+	private _makeValidMarkers(): void{
 		const priceScale = this._series.priceScale();
 		const timeScale = this._model.timeScale();
 		const seriesMarkers = this._series.indexedMarkers();
-		if (this._dataInvalidated) {
-			this._data.items = seriesMarkers.map<SeriesMarkerRendererDataItem>((marker: InternalSeriesMarker<TimePointIndex>) => ({
+		if (this._dataInvalidatedMarkers) {
+			this._dataMarkers.items = seriesMarkers.map<SeriesMarkerRendererDataItem>((marker: InternalSeriesMarker<TimePointIndex>) => ({
 				time: marker.time,
 				x: 0 as Coordinate,
 				y: 0 as Coordinate,
@@ -166,12 +174,12 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 				externalId: marker.id,
 				text: undefined,
 			}));
-			this._dataInvalidated = false;
+			this._dataInvalidatedMarkers = false;
 		}
 
 		const layoutOptions = this._model.options().layout;
 
-		this._data.visibleRange = null;
+		this._dataMarkers.visibleRange = null;
 		const visibleBars = timeScale.visibleStrictRange();
 		if (visibleBars === null) {
 			return;
@@ -181,7 +189,7 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 		if (firstValue === null) {
 			return;
 		}
-		if (this._data.items.length === 0) {
+		if (this._dataMarkers.items.length === 0) {
 			return;
 		}
 		let prevTimeIndex = NaN;
@@ -190,8 +198,8 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 			aboveBar: shapeMargin,
 			belowBar: shapeMargin,
 		};
-		this._data.visibleRange = visibleTimedValues(this._data.items, visibleBars, true);
-		for (let index = this._data.visibleRange.from; index < this._data.visibleRange.to; index++) {
+		this._dataMarkers.visibleRange = visibleTimedValues(this._dataMarkers.items, visibleBars, true);
+		for (let index = this._dataMarkers.visibleRange.from; index < this._dataMarkers.visibleRange.to; index++) {
 			const marker = seriesMarkers[index];
 			if (marker.time !== prevTimeIndex) {
 				// new bar, reset stack counter
@@ -200,7 +208,7 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 				prevTimeIndex = marker.time;
 			}
 
-			const rendererItem = this._data.items[index];
+			const rendererItem = this._dataMarkers.items[index];
 			rendererItem.x = timeScale.indexToCoordinate(marker.time);
 			if (marker.text !== undefined && marker.text.length > 0) {
 				rendererItem.text = {
@@ -217,6 +225,80 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 			}
 			fillSizeAndY(rendererItem, marker, dataAt, offsets, layoutOptions.fontSize, shapeMargin, priceScale, timeScale, firstValue.value);
 		}
+	}
+
+	private _makeValidHorizLines(): void{
+		const priceScale = this._series.priceScale();
+		const timeScale = this._model.timeScale();
+		const seriesHorizLines = this._series.indexedHorizLines();
+		if (this._dataInvalidatedHorizLines) {
+			this._dataHorizLines.items = seriesHorizLines.map<SeriesMarkerRendererDataItem>((horizLine: InternalSeriesMarker<TimePointIndex>) => ({
+				time: horizLine.time,
+				x: 0 as Coordinate,
+				y: 0 as Coordinate,
+				size: 0,
+				shape: horizLine.shape,
+				color: horizLine.color,
+				internalId: horizLine.internalId,
+				externalId: horizLine.id,
+				text: undefined,
+			}));
+			this._dataInvalidatedHorizLines = false;
+		}
+
+		const layoutOptions = this._model.options().layout;
+
+		this._dataHorizLines.visibleRange = null;
+		const visibleBars = timeScale.visibleStrictRange();
+		if (visibleBars === null) {
+			return;
+		}
+
+		const firstValue = this._series.firstValue();
+		if (firstValue === null) {
+			return;
+		}
+		if (this._dataHorizLines.items.length === 0) {
+			return;
+		}
+		let prevTimeIndex = NaN;
+		const shapeMargin = calculateShapeMargin(timeScale.barSpacing());
+		const offsets: Offsets = {
+			aboveBar: shapeMargin,
+			belowBar: shapeMargin,
+		};
+		this._dataHorizLines.visibleRange = visibleTimedValues(this._dataHorizLines.items, visibleBars, true);
+		for (let index = this._dataHorizLines.visibleRange.from; index < this._dataHorizLines.visibleRange.to; index++) {
+			const horizLine = seriesHorizLines[index];
+			if (horizLine.time !== prevTimeIndex) {
+				// new bar, reset stack counter
+				offsets.aboveBar = shapeMargin;
+				offsets.belowBar = shapeMargin;
+				prevTimeIndex = horizLine.time;
+			}
+
+			const rendererItem = this._dataHorizLines.items[index];
+			rendererItem.x = timeScale.indexToCoordinate(horizLine.time);
+			if (horizLine.text !== undefined && horizLine.text.length > 0) {
+				rendererItem.text = {
+					content: horizLine.text,
+					x: 0 as Coordinate,
+					y: 0 as Coordinate,
+					width: 0,
+					height: 0,
+				};
+			}
+			const dataAt = this._series.dataAt(horizLine.time);
+			if (dataAt === null) {
+				continue;
+			}
+			fillSizeAndY(rendererItem, horizLine, dataAt, offsets, layoutOptions.fontSize, shapeMargin, priceScale, timeScale, firstValue.value);
+		}
+	}
+
+	protected _makeValid(): void {
+		this._makeValidMarkers();
+		this._makeValidHorizLines();
 		this._invalidated = false;
 	}
 }

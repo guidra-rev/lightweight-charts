@@ -271,10 +271,14 @@ export interface ISeriesApi<
 	 */
 	setMarkers(data: SeriesMarker<HorzScaleItem>[]): void;
 
+	setHorizLines(data: SeriesMarker<HorzScaleItem>[]): void;
+
 	/**
 	 * Returns an array of series markers.
 	 */
 	markers(): SeriesMarker<HorzScaleItem>[];
+
+	horizLines(): SeriesMarker<HorzScaleItem>[];
 
 	/**
 	 * Creates a new price line

@@ -41,13 +41,18 @@ export interface SeriesMarkerRendererData {
 
 export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 	private _data: SeriesMarkerRendererData | null = null;
+	private _dataHorizLines: SeriesMarkerRendererData | null = null;
 	private _textWidthCache: TextWidthCache = new TextWidthCache();
 	private _fontSize: number = -1;
 	private _fontFamily: string = '';
 	private _font: string = '';
 
-	public setData(data: SeriesMarkerRendererData): void {
+	public setDataMarkers(data: SeriesMarkerRendererData): void {
 		this._data = data;
+	}
+
+	public setDataHorizLines(data: SeriesMarkerRendererData): void {
+		this._dataHorizLines = data;
 	}
 
 	public setParams(fontSize: number, fontFamily: string): void {
@@ -77,7 +82,7 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 		return null;
 	}
 
-	protected _drawImpl({ context: ctx }: MediaCoordinatesRenderingScope, isHovered: boolean, hitTestData?: unknown): void {
+	private _drawImplMarkers(ctx: CanvasRenderingContext2D, isHovered: boolean, hitTestData?: unknown): void {
 		if (this._data === null || this._data.visibleRange === null) {
 			return;
 		}
@@ -94,6 +99,30 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 			}
 			drawItem(item, ctx);
 		}
+	}
+
+	private _drawImplHorizLines(ctx: CanvasRenderingContext2D, isHovered: boolean, hitTestData?: unknown): void {
+		if (this._dataHorizLines === null || this._dataHorizLines.visibleRange === null) {
+			return;
+		}
+
+		ctx.textBaseline = 'middle';
+		ctx.font = this._font;
+
+		for (let i = this._dataHorizLines.visibleRange.from; i < this._dataHorizLines.visibleRange.to; i++) {
+			const item = this._dataHorizLines.items[i];
+			if (item.text !== undefined) {
+				item.text.width = this._textWidthCache.measureText(ctx, item.text.content);
+				item.text.height = this._fontSize;
+				item.text.x = item.x - item.text.width / 2 as Coordinate;
+			}
+			drawItem(item, ctx);
+		}
+	}
+
+	protected _drawImpl({ context: ctx }: MediaCoordinatesRenderingScope, isHovered: boolean, hitTestData?: unknown): void {
+		this._drawImplMarkers(ctx, isHovered, hitTestData);
+		this._drawImplHorizLines(ctx, isHovered, hitTestData);
 	}
 }
 

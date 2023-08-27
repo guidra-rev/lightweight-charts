@@ -193,8 +193,23 @@ export class SeriesApi<
 		this._series.setMarkers(convertedMarkers);
 	}
 
+	public setHorizLines(data: SeriesMarker<HorzScaleItem>[]): void {
+		checkItemsAreOrdered(data, this._horzScaleBehavior, true);
+
+		const convertedMarkers = data.map((marker: SeriesMarker<HorzScaleItem>) =>
+			convertSeriesMarker<HorzScaleItem, InternalHorzScaleItem>(marker, this._horzScaleBehavior.convertHorzItemToInternal(marker.time), marker.time)
+		);
+		this._series.setHorizLines(convertedMarkers);
+	}
+
 	public markers(): SeriesMarker<HorzScaleItem>[] {
 		return this._series.markers().map<SeriesMarker<HorzScaleItem>>((internalItem: SeriesMarker<InternalHorzScaleItem>) => {
+			return convertSeriesMarker<InternalHorzScaleItem, HorzScaleItem>(internalItem, internalItem.originalTime as HorzScaleItem, undefined);
+		});
+	}
+
+	public horizLines(): SeriesMarker<HorzScaleItem>[] {
+		return this._series.horizLines().map<SeriesMarker<HorzScaleItem>>((internalItem: SeriesMarker<InternalHorzScaleItem>) => {
 			return convertSeriesMarker<InternalHorzScaleItem, HorzScaleItem>(internalItem, internalItem.originalTime as HorzScaleItem, undefined);
 		});
 	}
