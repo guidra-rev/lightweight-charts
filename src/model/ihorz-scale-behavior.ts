@@ -60,7 +60,7 @@ export interface IHorzScaleBehavior<HorzScaleItem> {
 	 * @param item - item to be converted
 	 * @returns InternalHorzScaleItem
 	 */
-	convertHorzItemToInternal(item: HorzScaleItem): InternalHorzScaleItem;
+	convertHorzItemToInternal(item?: HorzScaleItem): InternalHorzScaleItem;
 	/**
 	 * Creates and returns a converter for changing series data into internal horizontal scale items.
 	 *

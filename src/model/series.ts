@@ -31,6 +31,7 @@ import { IChartModelBase } from './chart-model';
 import { Coordinate } from './coordinate';
 import { CustomPriceLine } from './custom-price-line';
 import { isDefaultPriceScale } from './default-price-scale';
+import { TimePoint } from './horz-scale-behavior-time/types';
 import { CustomData, CustomSeriesWhitespaceData, ICustomSeriesPaneView, WhitespaceCheck } from './icustom-series';
 import { InternalHorzScaleItem } from './ihorz-scale-behavior';
 import { FirstValue, IPriceDataSource } from './iprice-data-source';
@@ -773,15 +774,27 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 
 		this._indexedHorizLines = this._horizLines.map<InternalSeriesHorizLine<TimePointIndex>>((horizLine: SeriesHorizLine<InternalHorzScaleItem>, index: number) => {
 			// the first find index on the time scale (across all series)
-			const timePointIndex1 = ensureNotNull(timeScale.timeToIndex(horizLine.time1, true));
-			const timePointIndex2 = ensureNotNull(timeScale.timeToIndex(horizLine.time2, true));
+			let timePointIndex1 = undefined;
+			let seriesDataIndex1 = undefined;
 
-			// and then search that index inside the series data
-			const searchMode1 = timePointIndex1 < firstDataIndex? MismatchDirection.NearestRight : MismatchDirection.NearestLeft;
-			const searchMode2 = timePointIndex2 < firstDataIndex ? MismatchDirection.NearestRight : MismatchDirection.NearestLeft;
+			if(horizLine.time1 !== undefined 
+				&& (horizLine.time1 as unknown as TimePoint).timestamp as unknown !== undefined) {
 
-			const seriesDataIndex1 = ensureNotNull(this._data.search(timePointIndex1, searchMode1)).index;
-			const seriesDataIndex2 = ensureNotNull(this._data.search(timePointIndex2, searchMode2)).index;
+				timePointIndex1 = ensureNotNull(timeScale.timeToIndex(horizLine.time1, true));
+				const searchMode1 = timePointIndex1 < firstDataIndex ? MismatchDirection.NearestRight : MismatchDirection.NearestLeft;
+				seriesDataIndex1 = ensureNotNull(this._data.search(timePointIndex1, searchMode1)).index;
+			}
+
+			let timePointIndex2 = undefined;
+			let seriesDataIndex2 = undefined;
+
+			if(horizLine.time2 !== undefined 
+				&& (horizLine.time2 as unknown as TimePoint).timestamp as unknown !== undefined) {
+					
+				timePointIndex2 = ensureNotNull(timeScale.timeToIndex(horizLine.time2, true));
+				const searchMode2 = timePointIndex2 < firstDataIndex ? MismatchDirection.NearestRight : MismatchDirection.NearestLeft;
+				seriesDataIndex2 = ensureNotNull(this._data.search(timePointIndex2, searchMode2)).index;
+			}
 
 			return {
 				time1: seriesDataIndex1,

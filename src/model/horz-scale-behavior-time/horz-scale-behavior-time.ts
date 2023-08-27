@@ -37,10 +37,11 @@ function businessDayConverter(time: Time): InternalHorzScaleItem {
 	} as unknown as InternalHorzScaleItem;
 }
 
-function timestampConverter(time: Time): InternalHorzScaleItem {
+function timestampConverter(time?: Time): InternalHorzScaleItem {
 	if (!isUTCTimestamp(time)) {
 		throw new Error('time must be of type isUTCTimestamp');
 	}
+	
 	return {
 		timestamp: time,
 	} as unknown as InternalHorzScaleItem;
@@ -58,7 +59,7 @@ function selectTimeConverter(data: TimedData<Time>[]): TimeConverter | null {
 
 const validDateRegex = /^\d\d\d\d-\d\d-\d\d$/;
 
-export function convertTime(time: Time): InternalHorzScaleItem {
+export function convertTime(time?: Time): InternalHorzScaleItem {
 	if (isUTCTimestamp(time)) {
 		return timestampConverter(time);
 	}
@@ -70,7 +71,10 @@ export function convertTime(time: Time): InternalHorzScaleItem {
 	return businessDayConverter(time);
 }
 
-export function stringToBusinessDay(value: string): BusinessDay {
+export function stringToBusinessDay(value?: string): BusinessDay {
+	if(value === undefined)
+	throw new Error(`stringToBusinessDay : value is undefined`);
+
 	if (process.env.NODE_ENV === 'development') {
 		// in some browsers (I look at your Chrome) the Date constructor may accept invalid date string
 		// but parses them in 'implementation specific' way
@@ -198,7 +202,7 @@ export class HorzScaleBehaviorTime implements IHorzScaleBehavior<Time> {
 			: new Date(Date.UTC(time.businessDay.year, time.businessDay.month - 1, time.businessDay.day)).getTime();
 	}
 
-	public convertHorzItemToInternal(item: Time): InternalHorzScaleItem {
+	public convertHorzItemToInternal(item?: Time): InternalHorzScaleItem {
 		return convertTime(item);
 	}
 

@@ -35,8 +35,8 @@ export interface SeriesMarkerRendererDataItem extends TimedValue {
 }
 
 export interface SeriesHorizLineRendererDataItem{
-	time1: TimePointIndex;
-	time2: TimePointIndex;
+	time1?: TimePointIndex;
+	time2?: TimePointIndex;
 	x1: Coordinate;
 	x2: Coordinate;
 	y: Coordinate;

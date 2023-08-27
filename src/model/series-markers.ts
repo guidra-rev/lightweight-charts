@@ -51,14 +51,21 @@ export interface SeriesMarker<TimeType> {
 
 export interface SeriesHorizLine<TimeType> {
 	/**
-	 * The time of the marker.
+	 * The time of left point. If undefined, line is extended to the left
 	 */
-	time1: TimeType;
-	time2: TimeType;
+	time1?: TimeType;
+
+	/**
+	 * The time of right point. If undefined, line is extended to the right
+	 */
+	time2?: TimeType;
 	/**
 	 * The position of the text.
 	 */
 	position: SeriesMarkerPosition;
+	/**
+	 * The price of the line
+	 */
 	price: number;
 	/**
 	 * The shape of the marker.
@@ -82,12 +89,10 @@ export interface SeriesHorizLine<TimeType> {
 	 * @defaultValue `1`
 	 */
 	size?: number;
-
 	/**
 	 * @internal
 	 */
 	originalTime1: unknown;
-
 	/**
 	 * @internal
 	 */
@@ -116,9 +121,18 @@ export function convertSeriesMarker<InTimeType, OutTimeType>(sm: SeriesMarker<In
 	return res;
 }
 
-export function convertSeriesHorizLine<InTimeType, OutTimeType>(sm: SeriesHorizLine<InTimeType>, newTime1: OutTimeType, newTime2: OutTimeType, originalTime1?: unknown, originalTime2?: unknown): SeriesHorizLine<OutTimeType> {
+export function convertSeriesHorizLine<InTimeType, OutTimeType>(
+	sm: SeriesHorizLine<InTimeType>,
+	newTime1: OutTimeType,
+	newTime2: OutTimeType,
+	originalTime1?: unknown,
+	originalTime2?: unknown): SeriesHorizLine<OutTimeType> {
 
-	const { time1: inTime1, originalTime1: inOriginalTime1, time2: inTime2, originalTime2: inOriginalTime2, ...values } = sm;
+	const { time1: inTime1,
+		originalTime1: inOriginalTime1,
+		time2: inTime2,
+		originalTime2: inOriginalTime2,
+		...values } = sm;
 
 	/* eslint-disable @typescript-eslint/consistent-type-assertions */
 	const res = {

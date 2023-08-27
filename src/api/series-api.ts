@@ -196,7 +196,11 @@ export class SeriesApi<
 	public setHorizLines(data: SeriesHorizLine<HorzScaleItem>[]): void {
 
 		const convertedMarkers = data.map((marker: SeriesHorizLine<HorzScaleItem>) =>
-			convertSeriesHorizLine<HorzScaleItem, InternalHorzScaleItem>(marker, this._horzScaleBehavior.convertHorzItemToInternal(marker.time1), this._horzScaleBehavior.convertHorzItemToInternal(marker.time2), marker.time1, marker.time2)
+			convertSeriesHorizLine<HorzScaleItem, InternalHorzScaleItem>(marker, 
+				this._horzScaleBehavior.convertHorzItemToInternal(marker.time1), 
+				this._horzScaleBehavior.convertHorzItemToInternal(marker.time2), 
+				marker.time1, 
+				marker.time2)
 		);
 		this._series.setHorizLines(convertedMarkers);
 	}

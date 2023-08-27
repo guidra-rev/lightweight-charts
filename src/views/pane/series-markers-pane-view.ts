@@ -281,8 +281,14 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 			this._dataHorizLines.visibleRange.push(index);
 
 			const rendererItem = this._dataHorizLines.items[index];
-			rendererItem.x1 = timeScale.indexToCoordinate(horizLine.time1);
-			rendererItem.x2 = timeScale.indexToCoordinate(horizLine.time2);
+
+			rendererItem.x1 = 0 as Coordinate;
+			if(horizLine.time1 !== undefined)
+				rendererItem.x1 = timeScale.indexToCoordinate(horizLine.time1);
+
+			rendererItem.x2 = 10000 as Coordinate;
+			if(horizLine.time2 !== undefined)
+				rendererItem.x2 = timeScale.indexToCoordinate(horizLine.time2);
 
 			if (horizLine.text !== undefined && horizLine.text.length > 0) {
 				rendererItem.text = {

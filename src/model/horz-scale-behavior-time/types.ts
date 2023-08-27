@@ -66,7 +66,10 @@ export interface TimePoint {
  * @param time - The time to check.
  * @returns `true` if `time` is a {@link BusinessDay} object, false otherwise.
  */
-export function isBusinessDay(time: Time): time is BusinessDay {
+export function isBusinessDay(time?: Time): time is BusinessDay {
+	if(time === undefined)
+		return false;
+	
 	return !isNumber(time) && !isString(time);
 }
 
@@ -76,7 +79,9 @@ export function isBusinessDay(time: Time): time is BusinessDay {
  * @param time - The time to check.
  * @returns `true` if `time` is a {@link UTCTimestamp} number, false otherwise.
  */
-export function isUTCTimestamp(time: Time): time is UTCTimestamp {
+export function isUTCTimestamp(time?: Time): time is UTCTimestamp | undefined {
+	if(time === undefined)
+		return true;
 	return isNumber(time);
 }
 
