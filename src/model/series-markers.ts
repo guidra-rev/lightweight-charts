@@ -60,17 +60,9 @@ export interface SeriesHorizLine<TimeType> {
 	 */
 	time2?: TimeType;
 	/**
-	 * The position of the text.
-	 */
-	position: SeriesMarkerPosition;
-	/**
 	 * The price of the line
 	 */
 	price: number;
-	/**
-	 * The shape of the marker.
-	 */
-	shape: SeriesMarkerShape;
 	/**
 	 * The color of the marker.
 	 */
@@ -80,9 +72,13 @@ export interface SeriesHorizLine<TimeType> {
 	 */
 	id?: string;
 	/**
-	 * The optional text of the marker.
+	 * The left text of the line.
 	 */
-	text?: string;
+	textLeft?: string;
+	/**
+	 * The right text of the line.
+	 */
+	textRight?: string;
 	/**
 	 * The optional size of the marker.
 	 *

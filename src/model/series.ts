@@ -790,7 +790,7 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 
 			if(horizLine.time2 !== undefined 
 				&& (horizLine.time2 as unknown as TimePoint).timestamp as unknown !== undefined) {
-					
+
 				timePointIndex2 = ensureNotNull(timeScale.timeToIndex(horizLine.time2, true));
 				const searchMode2 = timePointIndex2 < firstDataIndex ? MismatchDirection.NearestRight : MismatchDirection.NearestLeft;
 				seriesDataIndex2 = ensureNotNull(this._data.search(timePointIndex2, searchMode2)).index;
@@ -799,12 +799,11 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 			return {
 				time1: seriesDataIndex1,
 				time2: seriesDataIndex2,
-				position: horizLine.position,
-				shape: horizLine.shape,
 				color: horizLine.color,
 				id: horizLine.id,
 				internalId: index,
-				text: horizLine.text,
+				textLeft: horizLine.textLeft,
+				textRight: horizLine.textRight,
 				size: horizLine.size,
 				originalTime1: horizLine.originalTime1,
 				originalTime2: horizLine.originalTime2,

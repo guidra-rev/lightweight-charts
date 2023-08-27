@@ -41,11 +41,11 @@ export interface SeriesHorizLineRendererDataItem{
 	x2: Coordinate;
 	y: Coordinate;
 	size: number;
-	shape: SeriesMarkerShape;
 	color: string;
 	internalId: number;
 	externalId?: string;
-	text?: SeriesMarkerText;
+	textLeft?: SeriesMarkerText;
+	textRight?: SeriesMarkerText;
 }
 
 export interface SeriesMarkerRendererData {
@@ -133,14 +133,23 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 				continue;
 
 			const item = this._dataHorizLines.items[i];
-			// if (item.text !== undefined) {
-			// 	item.text.width = this._textWidthCache.measureText(ctx, item.text.content);
-			// 	item.text.height = this._fontSize;
-			// 	item.text.x = item.x - item.text.width / 2 as Coordinate;
-			// }
-			// if (item.text !== undefined) {
-			// 	drawText(ctx, item.text.content, item.text.x, item.text.y);
-			// }
+
+			if (item.textLeft !== undefined && item.x1 !== 0) {
+				item.textLeft.width = this._textWidthCache.measureText(ctx, item.textLeft.content);
+				item.textLeft.height = this._fontSize;
+				item.textLeft.x = item.x1;
+				item.textLeft.y = item.y - 5 as Coordinate;
+				drawText(ctx, item.textLeft.content, item.textLeft.x, item.textLeft.y);
+			}
+
+			if (item.textRight !== undefined && item.x2 !== 10000) {
+				item.textRight.width = this._textWidthCache.measureText(ctx, item.textRight.content);
+				item.textRight.height = this._fontSize;
+				item.textRight.x = item.x2 - item.textRight.width  as Coordinate;
+				item.textRight.y = item.y - 5 as Coordinate;
+				drawText(ctx, item.textRight.content, item.textRight.x, item.textRight.y);
+			}
+
 			drawHorizLine(ctx, item.y, item.x1, item.x2, item.size, item.color);
 		}
 	}

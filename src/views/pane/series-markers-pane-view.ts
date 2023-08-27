@@ -241,11 +241,11 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 				x2: 0 as Coordinate,
 				y: 0 as Coordinate,
 				size: 0,
-				shape: horizLine.shape,
 				color: horizLine.color,
 				internalId: horizLine.internalId,
 				externalId: horizLine.id,
-				text: undefined,
+				textLeft: undefined,
+				textRight: undefined
 			}));
 			this._dataInvalidatedHorizLines = false;
 		}
@@ -290,9 +290,19 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 			if(horizLine.time2 !== undefined)
 				rendererItem.x2 = timeScale.indexToCoordinate(horizLine.time2);
 
-			if (horizLine.text !== undefined && horizLine.text.length > 0) {
-				rendererItem.text = {
-					content: horizLine.text,
+			if (horizLine.textLeft !== undefined && horizLine.textLeft.length > 0) {
+				rendererItem.textLeft = {
+					content: horizLine.textLeft,
+					x: 0 as Coordinate,
+					y: 0 as Coordinate,
+					width: 0,
+					height: 0,
+				};
+			}
+
+			if (horizLine.textRight !== undefined && horizLine.textRight.length > 0) {
+				rendererItem.textRight = {
+					content: horizLine.textRight,
 					x: 0 as Coordinate,
 					y: 0 as Coordinate,
 					width: 0,
