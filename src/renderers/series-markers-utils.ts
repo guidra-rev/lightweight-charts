@@ -23,7 +23,7 @@ export function shapeSize(shape: SeriesMarkerShape, originalSize: number): numbe
 		case 'square':
 			return size(originalSize, 0.7);
 		case 'vertLine':
-			return size(originalSize, 0.7);
+			return originalSize;
 	}
 }
 

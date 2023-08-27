@@ -14,6 +14,7 @@ import { drawArrow, hitTestArrow } from './series-markers-arrow';
 import { drawCircle, hitTestCircle } from './series-markers-circle';
 import { drawSquare, hitTestSquare } from './series-markers-square';
 import { drawText, hitTestText } from './series-markers-text';
+import { drawVertLine } from './series-markers-vertline';
 
 export interface SeriesMarkerText {
 	content: string;
@@ -125,7 +126,7 @@ function drawShape(item: SeriesMarkerRendererDataItem, ctx: CanvasRenderingConte
 			drawSquare(ctx, item.x, item.y, item.size);
 			return;
 		case 'vertLine':
-			drawSquare(ctx, item.x, item.y, item.size);
+			drawVertLine(ctx, item.x, item.y, item.size, item.color);
 			return;
 	}
 
