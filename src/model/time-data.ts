@@ -1,6 +1,5 @@
 import { lowerbound, upperbound } from '../helpers/algorithms';
 import { Nominal } from '../helpers/nominal';
-
 import { Coordinate } from './coordinate';
 import { InternalHorzScaleItem } from './ihorz-scale-behavior';
 import { RangeImpl } from './range-impl';
@@ -101,3 +100,4 @@ export function visibleTimedValues(items: TimedValue[], range: RangeImpl<TimePoi
 
 	return { from: extendedFrom, to: extendedTo };
 }
+

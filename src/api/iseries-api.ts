@@ -6,7 +6,7 @@ import { SeriesDataItemTypeMap } from '../model/data-consumer';
 import { Time } from '../model/horz-scale-behavior-time/types';
 import { MismatchDirection } from '../model/plot-list';
 import { CreatePriceLineOptions } from '../model/price-line-options';
-import { SeriesMarker } from '../model/series-markers';
+import { SeriesHorizLine, SeriesMarker } from '../model/series-markers';
 import {
 	SeriesOptionsMap,
 	SeriesPartialOptionsMap,
@@ -271,14 +271,14 @@ export interface ISeriesApi<
 	 */
 	setMarkers(data: SeriesMarker<HorzScaleItem>[]): void;
 
-	setHorizLines(data: SeriesMarker<HorzScaleItem>[]): void;
+	setHorizLines(data: SeriesHorizLine<HorzScaleItem>[]): void;
 
 	/**
 	 * Returns an array of series markers.
 	 */
 	markers(): SeriesMarker<HorzScaleItem>[];
 
-	horizLines(): SeriesMarker<HorzScaleItem>[];
+	horizLines(): SeriesHorizLine<HorzScaleItem>[];
 
 	/**
 	 * Creates a new price line

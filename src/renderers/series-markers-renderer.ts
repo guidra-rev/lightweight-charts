@@ -7,14 +7,14 @@ import { HoveredObject } from '../model/chart-model';
 import { Coordinate } from '../model/coordinate';
 import { SeriesMarkerShape } from '../model/series-markers';
 import { TextWidthCache } from '../model/text-width-cache';
-import { SeriesItemsIndexesRange, TimedValue } from '../model/time-data';
+import { SeriesItemsIndexesRange, TimePointIndex, TimedValue } from '../model/time-data';
 
 import { MediaCoordinatesPaneRenderer } from './media-coordinates-pane-renderer';
 import { drawArrow, hitTestArrow } from './series-markers-arrow';
 import { drawCircle, hitTestCircle } from './series-markers-circle';
 import { drawSquare, hitTestSquare } from './series-markers-square';
 import { drawText, hitTestText } from './series-markers-text';
-import { drawVertLine } from './series-markers-vertline';
+import { drawHorizLine, drawVertLine } from './series-markers-vertline';
 
 export interface SeriesMarkerText {
 	content: string;
@@ -34,14 +34,33 @@ export interface SeriesMarkerRendererDataItem extends TimedValue {
 	text?: SeriesMarkerText;
 }
 
+export interface SeriesHorizLineRendererDataItem{
+	time1: TimePointIndex;
+	time2: TimePointIndex;
+	x1: Coordinate;
+	x2: Coordinate;
+	y: Coordinate;
+	size: number;
+	shape: SeriesMarkerShape;
+	color: string;
+	internalId: number;
+	externalId?: string;
+	text?: SeriesMarkerText;
+}
+
 export interface SeriesMarkerRendererData {
 	items: SeriesMarkerRendererDataItem[];
 	visibleRange: SeriesItemsIndexesRange | null;
 }
 
+export interface SeriesHorizLineRendererData {
+	items: SeriesHorizLineRendererDataItem[];
+	visibleRange: number[];
+}
+
 export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 	private _data: SeriesMarkerRendererData | null = null;
-	private _dataHorizLines: SeriesMarkerRendererData | null = null;
+	private _dataHorizLines: SeriesHorizLineRendererData | null = null;
 	private _textWidthCache: TextWidthCache = new TextWidthCache();
 	private _fontSize: number = -1;
 	private _fontFamily: string = '';
@@ -51,7 +70,7 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 		this._data = data;
 	}
 
-	public setDataHorizLines(data: SeriesMarkerRendererData): void {
+	public setDataHorizLines(data: SeriesHorizLineRendererData): void {
 		this._dataHorizLines = data;
 	}
 
@@ -102,21 +121,27 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 	}
 
 	private _drawImplHorizLines(ctx: CanvasRenderingContext2D, isHovered: boolean, hitTestData?: unknown): void {
-		if (this._dataHorizLines === null || this._dataHorizLines.visibleRange === null) {
+		if (this._dataHorizLines === null || this._dataHorizLines.visibleRange.length === 0) {
 			return;
 		}
 
 		ctx.textBaseline = 'middle';
 		ctx.font = this._font;
 
-		for (let i = this._dataHorizLines.visibleRange.from; i < this._dataHorizLines.visibleRange.to; i++) {
+		for (let i = 0; i < this._dataHorizLines.items.length; i++) {
+			if(!this._dataHorizLines.visibleRange.includes(i))
+				continue;
+
 			const item = this._dataHorizLines.items[i];
-			if (item.text !== undefined) {
-				item.text.width = this._textWidthCache.measureText(ctx, item.text.content);
-				item.text.height = this._fontSize;
-				item.text.x = item.x - item.text.width / 2 as Coordinate;
-			}
-			drawItem(item, ctx);
+			// if (item.text !== undefined) {
+			// 	item.text.width = this._textWidthCache.measureText(ctx, item.text.content);
+			// 	item.text.height = this._fontSize;
+			// 	item.text.x = item.x - item.text.width / 2 as Coordinate;
+			// }
+			// if (item.text !== undefined) {
+			// 	drawText(ctx, item.text.content, item.text.x, item.text.y);
+			// }
+			drawHorizLine(ctx, item.y, item.x1, item.x2, item.size, item.color);
 		}
 	}
 

@@ -7,12 +7,14 @@ import { IChartModelBase } from '../../model/chart-model';
 import { Coordinate } from '../../model/coordinate';
 import { PriceScale } from '../../model/price-scale';
 import { ISeries } from '../../model/series';
-import { InternalSeriesMarker } from '../../model/series-markers';
+import { InternalSeriesHorizLine, InternalSeriesMarker } from '../../model/series-markers';
 import { SeriesType } from '../../model/series-options';
 import { TimePointIndex, visibleTimedValues } from '../../model/time-data';
 import { ITimeScale } from '../../model/time-scale';
 import { IPaneRenderer } from '../../renderers/ipane-renderer';
 import {
+	SeriesHorizLineRendererData,
+	SeriesHorizLineRendererDataItem,
 	SeriesMarkerRendererData,
 	SeriesMarkerRendererDataItem,
 	SeriesMarkersRenderer,
@@ -88,7 +90,7 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 	private readonly _series: ISeries<SeriesType>;
 	private readonly _model: IChartModelBase;
 	private _dataMarkers: SeriesMarkerRendererData;
-	private _dataHorizLines: SeriesMarkerRendererData;
+	private _dataHorizLines: SeriesHorizLineRendererData;
 
 	private _invalidated: boolean = true;
 	private _dataInvalidatedMarkers: boolean = true;
@@ -108,7 +110,7 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 		};
 		this._dataHorizLines = {
 			items: [],
-			visibleRange: null,
+			visibleRange: [],
 		};
 	}
 
@@ -232,9 +234,11 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 		const timeScale = this._model.timeScale();
 		const seriesHorizLines = this._series.indexedHorizLines();
 		if (this._dataInvalidatedHorizLines) {
-			this._dataHorizLines.items = seriesHorizLines.map<SeriesMarkerRendererDataItem>((horizLine: InternalSeriesMarker<TimePointIndex>) => ({
-				time: horizLine.time,
-				x: 0 as Coordinate,
+			this._dataHorizLines.items = seriesHorizLines.map<SeriesHorizLineRendererDataItem>((horizLine: InternalSeriesHorizLine<TimePointIndex>) => ({
+				time1: horizLine.time1,
+				time2: horizLine.time2,
+				x1: 0 as Coordinate,
+				x2: 0 as Coordinate,
 				y: 0 as Coordinate,
 				size: 0,
 				shape: horizLine.shape,
@@ -246,9 +250,9 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 			this._dataInvalidatedHorizLines = false;
 		}
 
-		const layoutOptions = this._model.options().layout;
+		// const layoutOptions = this._model.options().layout;
 
-		this._dataHorizLines.visibleRange = null;
+		this._dataHorizLines.visibleRange = [];
 		const visibleBars = timeScale.visibleStrictRange();
 		if (visibleBars === null) {
 			return;
@@ -261,24 +265,25 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 		if (this._dataHorizLines.items.length === 0) {
 			return;
 		}
-		let prevTimeIndex = NaN;
-		const shapeMargin = calculateShapeMargin(timeScale.barSpacing());
-		const offsets: Offsets = {
-			aboveBar: shapeMargin,
-			belowBar: shapeMargin,
-		};
-		this._dataHorizLines.visibleRange = visibleTimedValues(this._dataHorizLines.items, visibleBars, true);
-		for (let index = this._dataHorizLines.visibleRange.from; index < this._dataHorizLines.visibleRange.to; index++) {
+
+		for (let index = 0; index < this._dataHorizLines.items.length; index++) {
 			const horizLine = seriesHorizLines[index];
-			if (horizLine.time !== prevTimeIndex) {
-				// new bar, reset stack counter
-				offsets.aboveBar = shapeMargin;
-				offsets.belowBar = shapeMargin;
-				prevTimeIndex = horizLine.time;
-			}
+
+			// don't render lignes outside of screen
+			const tooFarLeft = horizLine.time2 !== undefined && horizLine.time2 < visibleBars.left();
+			if(tooFarLeft)
+				continue;
+
+			const tooFarRight = horizLine.time1 !== undefined && horizLine.time1 > visibleBars.right();
+			if(tooFarRight)
+				continue;
+			
+			this._dataHorizLines.visibleRange.push(index);
 
 			const rendererItem = this._dataHorizLines.items[index];
-			rendererItem.x = timeScale.indexToCoordinate(horizLine.time);
+			rendererItem.x1 = timeScale.indexToCoordinate(horizLine.time1);
+			rendererItem.x2 = timeScale.indexToCoordinate(horizLine.time2);
+
 			if (horizLine.text !== undefined && horizLine.text.length > 0) {
 				rendererItem.text = {
 					content: horizLine.text,
@@ -288,11 +293,8 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 					height: 0,
 				};
 			}
-			const dataAt = this._series.dataAt(horizLine.time);
-			if (dataAt === null) {
-				continue;
-			}
-			fillSizeAndY(rendererItem, horizLine, dataAt, offsets, layoutOptions.fontSize, shapeMargin, priceScale, timeScale, firstValue.value);
+
+			rendererItem.y = priceScale.priceToCoordinate(horizLine.price, firstValue.value);
 		}
 	}
 

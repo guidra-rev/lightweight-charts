@@ -16,7 +16,7 @@ import { CreatePriceLineOptions, PriceLineOptions } from '../model/price-line-op
 import { RangeImpl } from '../model/range-impl';
 import { Series } from '../model/series';
 import { SeriesPlotRow } from '../model/series-data';
-import { convertSeriesMarker, SeriesMarker } from '../model/series-markers';
+import { convertSeriesHorizLine, convertSeriesMarker, SeriesHorizLine, SeriesMarker } from '../model/series-markers';
 import {
 	SeriesOptionsMap,
 	SeriesPartialOptionsMap,
@@ -193,11 +193,10 @@ export class SeriesApi<
 		this._series.setMarkers(convertedMarkers);
 	}
 
-	public setHorizLines(data: SeriesMarker<HorzScaleItem>[]): void {
-		checkItemsAreOrdered(data, this._horzScaleBehavior, true);
+	public setHorizLines(data: SeriesHorizLine<HorzScaleItem>[]): void {
 
-		const convertedMarkers = data.map((marker: SeriesMarker<HorzScaleItem>) =>
-			convertSeriesMarker<HorzScaleItem, InternalHorzScaleItem>(marker, this._horzScaleBehavior.convertHorzItemToInternal(marker.time), marker.time)
+		const convertedMarkers = data.map((marker: SeriesHorizLine<HorzScaleItem>) =>
+			convertSeriesHorizLine<HorzScaleItem, InternalHorzScaleItem>(marker, this._horzScaleBehavior.convertHorzItemToInternal(marker.time1), this._horzScaleBehavior.convertHorzItemToInternal(marker.time2), marker.time1, marker.time2)
 		);
 		this._series.setHorizLines(convertedMarkers);
 	}
@@ -208,9 +207,9 @@ export class SeriesApi<
 		});
 	}
 
-	public horizLines(): SeriesMarker<HorzScaleItem>[] {
-		return this._series.horizLines().map<SeriesMarker<HorzScaleItem>>((internalItem: SeriesMarker<InternalHorzScaleItem>) => {
-			return convertSeriesMarker<InternalHorzScaleItem, HorzScaleItem>(internalItem, internalItem.originalTime as HorzScaleItem, undefined);
+	public horizLines(): SeriesHorizLine<HorzScaleItem>[] {
+		return this._series.horizLines().map<SeriesHorizLine<HorzScaleItem>>((internalItem: SeriesHorizLine<InternalHorzScaleItem>) => {
+			return convertSeriesHorizLine<InternalHorzScaleItem, HorzScaleItem>(internalItem, internalItem.originalTime1 as HorzScaleItem, internalItem.originalTime2 as HorzScaleItem, undefined, undefined);
 		});
 	}
 

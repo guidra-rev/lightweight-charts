@@ -49,7 +49,56 @@ export interface SeriesMarker<TimeType> {
 	originalTime: unknown;
 }
 
+export interface SeriesHorizLine<TimeType> {
+	/**
+	 * The time of the marker.
+	 */
+	time1: TimeType;
+	time2: TimeType;
+	/**
+	 * The position of the text.
+	 */
+	position: SeriesMarkerPosition;
+	price: number;
+	/**
+	 * The shape of the marker.
+	 */
+	shape: SeriesMarkerShape;
+	/**
+	 * The color of the marker.
+	 */
+	color: string;
+	/**
+	 * The ID of the marker.
+	 */
+	id?: string;
+	/**
+	 * The optional text of the marker.
+	 */
+	text?: string;
+	/**
+	 * The optional size of the marker.
+	 *
+	 * @defaultValue `1`
+	 */
+	size?: number;
+
+	/**
+	 * @internal
+	 */
+	originalTime1: unknown;
+
+	/**
+	 * @internal
+	 */
+	originalTime2: unknown;
+}
+
 export interface InternalSeriesMarker<TimeType> extends SeriesMarker<TimeType> {
+	internalId: number;
+}
+
+export interface InternalSeriesHorizLine<TimeType> extends SeriesHorizLine<TimeType> {
 	internalId: number;
 }
 
@@ -63,6 +112,28 @@ export function convertSeriesMarker<InTimeType, OutTimeType>(sm: SeriesMarker<In
 	/* eslint-enable @typescript-eslint/consistent-type-assertions */
 	if (originalTime !== undefined) {
 		res.originalTime = originalTime;
+	}
+	return res;
+}
+
+export function convertSeriesHorizLine<InTimeType, OutTimeType>(sm: SeriesHorizLine<InTimeType>, newTime1: OutTimeType, newTime2: OutTimeType, originalTime1?: unknown, originalTime2?: unknown): SeriesHorizLine<OutTimeType> {
+
+	const { time1: inTime1, originalTime1: inOriginalTime1, time2: inTime2, originalTime2: inOriginalTime2, ...values } = sm;
+
+	/* eslint-disable @typescript-eslint/consistent-type-assertions */
+	const res = {
+		time1: newTime1,
+		time2: newTime2,
+		...values,
+	} as SeriesHorizLine<OutTimeType>;
+
+	/* eslint-enable @typescript-eslint/consistent-type-assertions */
+	if (originalTime1 !== undefined) {
+		res.originalTime1 = originalTime1;
+	}
+
+	if (originalTime2 !== undefined) {
+		res.originalTime2 = originalTime2;
 	}
 	return res;
 }
