@@ -175,6 +175,7 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 				internalId: marker.internalId,
 				externalId: marker.id,
 				text: undefined,
+				lineStyle: marker.lineStyle
 			}));
 			this._dataInvalidatedMarkers = false;
 		}
@@ -245,7 +246,8 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 				internalId: horizLine.internalId,
 				externalId: horizLine.id,
 				textLeft: undefined,
-				textRight: undefined
+				textRight: undefined,
+				lineStyle: horizLine.lineStyle
 			}));
 			this._dataInvalidatedHorizLines = false;
 		}

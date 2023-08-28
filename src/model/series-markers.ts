@@ -1,3 +1,5 @@
+import { LineStyle } from "../renderers/draw-line";
+
 /**
  * Represents the position of a series marker relative to a bar.
  */
@@ -44,6 +46,11 @@ export interface SeriesMarker<TimeType> {
 	size?: number;
 
 	/**
+	 * Style for vertical line
+	 */
+	lineStyle: LineStyle;
+
+	/**
 	 * @internal
 	 */
 	originalTime: unknown;
@@ -85,6 +92,10 @@ export interface SeriesHorizLine<TimeType> {
 	 * @defaultValue `1`
 	 */
 	size?: number;
+	/**
+	 * Line style
+	 */
+	lineStyle: LineStyle;
 	/**
 	 * @internal
 	 */

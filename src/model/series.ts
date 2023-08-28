@@ -759,6 +759,7 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 				text: marker.text,
 				size: marker.size,
 				originalTime: marker.originalTime,
+				lineStyle: marker.lineStyle
 			};
 		});
 	}
@@ -807,7 +808,8 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 				size: horizLine.size,
 				originalTime1: horizLine.originalTime1,
 				originalTime2: horizLine.originalTime2,
-				price: horizLine.price
+				price: horizLine.price,
+				lineStyle: horizLine.lineStyle
 			};
 		});
 	}

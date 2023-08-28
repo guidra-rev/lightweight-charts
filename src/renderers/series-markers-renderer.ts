@@ -15,6 +15,7 @@ import { drawCircle, hitTestCircle } from './series-markers-circle';
 import { drawSquare, hitTestSquare } from './series-markers-square';
 import { drawText, hitTestText } from './series-markers-text';
 import { drawHorizLine, drawVertLine } from './series-markers-vertline';
+import { LineStyle } from './draw-line';
 
 export interface SeriesMarkerText {
 	content: string;
@@ -32,6 +33,7 @@ export interface SeriesMarkerRendererDataItem extends TimedValue {
 	internalId: number;
 	externalId?: string;
 	text?: SeriesMarkerText;
+	lineStyle: LineStyle;
 }
 
 export interface SeriesHorizLineRendererDataItem{
@@ -46,6 +48,7 @@ export interface SeriesHorizLineRendererDataItem{
 	externalId?: string;
 	textLeft?: SeriesMarkerText;
 	textRight?: SeriesMarkerText;
+	lineStyle: LineStyle;
 }
 
 export interface SeriesMarkerRendererData {
@@ -150,7 +153,7 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 				drawText(ctx, item.textRight.content, item.textRight.x, item.textRight.y);
 			}
 
-			drawHorizLine(ctx, item.y, item.x1, item.x2, item.size, item.color);
+			drawHorizLine(ctx, item.y, item.x1, item.x2, item.size, item.color, item.lineStyle);
 		}
 	}
 
@@ -189,7 +192,7 @@ function drawShape(item: SeriesMarkerRendererDataItem, ctx: CanvasRenderingConte
 			drawSquare(ctx, item.x, item.y, item.size);
 			return;
 		case 'vertLine':
-			drawVertLine(ctx, item.x, item.y, item.size, item.color);
+			drawVertLine(ctx, item.x, item.y, item.size, item.color, item.lineStyle);
 			return;
 	}
 
