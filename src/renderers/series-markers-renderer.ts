@@ -44,7 +44,6 @@ export interface SeriesHorizLineRendererDataItem{
 	y: Coordinate;
 	size: number;
 	color: string;
-	internalId: number;
 	externalId?: string;
 	textLeft?: SeriesMarkerText;
 	textRight?: SeriesMarkerText;

@@ -7,7 +7,7 @@ import { IChartModelBase } from '../../model/chart-model';
 import { Coordinate } from '../../model/coordinate';
 import { PriceScale } from '../../model/price-scale';
 import { ISeries } from '../../model/series';
-import { InternalSeriesHorizLine, InternalSeriesMarker } from '../../model/series-markers';
+import { InternalSeriesMarker, SeriesHorizLine } from '../../model/series-markers';
 import { SeriesType } from '../../model/series-options';
 import { TimePointIndex, visibleTimedValues } from '../../model/time-data';
 import { ITimeScale } from '../../model/time-scale';
@@ -235,7 +235,7 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 		const timeScale = this._model.timeScale();
 		const seriesHorizLines = this._series.indexedHorizLines();
 		if (this._dataInvalidatedHorizLines) {
-			this._dataHorizLines.items = seriesHorizLines.map<SeriesHorizLineRendererDataItem>((horizLine: InternalSeriesHorizLine<TimePointIndex>) => ({
+			this._dataHorizLines.items = seriesHorizLines.map<SeriesHorizLineRendererDataItem>((horizLine: SeriesHorizLine<TimePointIndex>) => ({
 				time1: horizLine.time1,
 				time2: horizLine.time2,
 				x1: 0 as Coordinate,
@@ -243,7 +243,6 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 				y: 0 as Coordinate,
 				size: 0,
 				color: horizLine.color,
-				internalId: horizLine.internalId,
 				externalId: horizLine.id,
 				textLeft: undefined,
 				textRight: undefined,

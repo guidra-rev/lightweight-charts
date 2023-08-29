@@ -3,7 +3,7 @@ import { IPriceFormatter } from '../formatters/iprice-formatter';
 import { BarPrice } from '../model/bar';
 import { Coordinate } from '../model/coordinate';
 import { SeriesDataItemTypeMap } from '../model/data-consumer';
-import { Time } from '../model/horz-scale-behavior-time/types';
+import { Time, UTCTimestamp } from '../model/horz-scale-behavior-time/types';
 import { MismatchDirection } from '../model/plot-list';
 import { CreatePriceLineOptions } from '../model/price-line-options';
 import { SeriesHorizLine, SeriesMarker } from '../model/series-markers';
@@ -271,14 +271,14 @@ export interface ISeriesApi<
 	 */
 	setMarkers(data: SeriesMarker<HorzScaleItem>[]): void;
 
-	setHorizLines(data: SeriesHorizLine<HorzScaleItem>[]): void;
+	setHorizLines(data: SeriesHorizLine<UTCTimestamp>[]): void;
 
 	/**
 	 * Returns an array of series markers.
 	 */
 	markers(): SeriesMarker<HorzScaleItem>[];
 
-	horizLines(): SeriesHorizLine<HorzScaleItem>[];
+	horizLines(): SeriesHorizLine<UTCTimestamp>[];
 
 	/**
 	 * Creates a new price line

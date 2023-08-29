@@ -9,6 +9,7 @@ import { ChartModel } from './chart-model';
 import { Coordinate } from './coordinate';
 // import { defaultTickMarkFormatter } from './default-tick-mark-formatter';
 import { FormattedLabelsCache } from './formatted-labels-cache';
+import { UTCTimestamp } from './horz-scale-behavior-time/types';
 import { IHorzScaleBehavior, InternalHorzScaleItem, InternalHorzScaleItemKey } from './ihorz-scale-behavior';
 import { LocalizationOptions } from './localization-options';
 import { areRangesEqual, RangeImpl } from './range-impl';
@@ -183,6 +184,7 @@ export interface ITimeScale {
 	visibleStrictRange(): RangeImpl<TimePointIndex> | null;
 	hasPoints(): boolean;
 	timeToIndex(time: InternalHorzScaleItem, findNearest: boolean): TimePointIndex | null;
+	timeUtcToIndex(time: UTCTimestamp, findNearest: boolean): TimePointIndex | null;
 
 	barSpacing(): number;
 	rightOffset(): number;
@@ -303,6 +305,26 @@ export class TimeScale<HorzScaleItem> implements ITimeScale {
 		const index = lowerbound(this._points, this._horzScaleBehavior.key(time), (a: TimeScalePoint, b: InternalHorzScaleItemKey) => this._horzScaleBehavior.key(a.time) < b);
 
 		if (this._horzScaleBehavior.key(time) < this._horzScaleBehavior.key(this._points[index].time)) {
+			return findNearest ? index as TimePointIndex : null;
+		}
+
+		return index as TimePointIndex;
+	}
+
+	public timeUtcToIndex(time: UTCTimestamp, findNearest: boolean) : TimePointIndex | null {
+		if (this._points.length < 1) {
+			// no time points available
+			return null;
+		}
+
+		if (time > this._horzScaleBehavior.key(this._points[this._points.length - 1].time)) {
+			// special case
+			return findNearest ? this._points.length - 1 as TimePointIndex : null;
+		}
+
+		const index = lowerbound(this._points, time, (a: TimeScalePoint, b: UTCTimestamp) => this._horzScaleBehavior.key(a.time) < b);
+
+		if (time < this._horzScaleBehavior.key(this._points[index].time)) {
 			return findNearest ? index as TimePointIndex : null;
 		}
 

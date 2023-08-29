@@ -31,7 +31,7 @@ import { IChartModelBase } from './chart-model';
 import { Coordinate } from './coordinate';
 import { CustomPriceLine } from './custom-price-line';
 import { isDefaultPriceScale } from './default-price-scale';
-import { TimePoint } from './horz-scale-behavior-time/types';
+import { UTCTimestamp } from './horz-scale-behavior-time/types';
 import { CustomData, CustomSeriesWhitespaceData, ICustomSeriesPaneView, WhitespaceCheck } from './icustom-series';
 import { InternalHorzScaleItem } from './ihorz-scale-behavior';
 import { FirstValue, IPriceDataSource } from './iprice-data-source';
@@ -45,7 +45,7 @@ import { PriceRangeImpl } from './price-range-impl';
 import { PriceScale } from './price-scale';
 import { ISeriesBarColorer, SeriesBarColorer } from './series-bar-colorer';
 import { createSeriesPlotList, SeriesPlotList, SeriesPlotRow } from './series-data';
-import { InternalSeriesHorizLine, InternalSeriesMarker, SeriesHorizLine, SeriesMarker } from './series-markers';
+import { InternalSeriesMarker, SeriesHorizLine, SeriesMarker } from './series-markers';
 import {
 	AreaStyleOptions,
 	BaselineStyleOptions,
@@ -139,7 +139,7 @@ export interface ISeries<T extends SeriesType> extends IPriceDataSource {
 	priceScale(): PriceScale;
 	lastValueData(globalLast: boolean): LastValueDataResult;
 	indexedMarkers(): InternalSeriesMarker<TimePointIndex>[];
-	indexedHorizLines(): InternalSeriesHorizLine<TimePointIndex>[];
+	indexedHorizLines(): SeriesHorizLine<TimePointIndex>[];
 	barColorer(): ISeriesBarColorer<T>;
 	markerDataAtIndex(index: TimePointIndex): MarkerData | null;
 	dataAt(time: TimePointIndex): SeriesDataAtTypeMap[SeriesType] | null;
@@ -159,9 +159,9 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 	private _barColorerCache: SeriesBarColorer<T> | null = null;
 	private readonly _options: SeriesOptionsInternal<T>;
 	private _markers: readonly SeriesMarker<InternalHorzScaleItem>[] = [];
-	private _horizLines: readonly SeriesHorizLine<InternalHorzScaleItem>[] = [];
+	private _horizLines: SeriesHorizLine<UTCTimestamp>[] = [];
 	private _indexedMarkers: InternalSeriesMarker<TimePointIndex>[] = [];
-	private _indexedHorizLines: InternalSeriesHorizLine<TimePointIndex>[] = [];
+	private _indexedHorizLines: SeriesHorizLine<TimePointIndex>[] = [];
 	private _markersPaneView!: SeriesMarkersPaneView;
 	private _animationTimeoutId: TimerId | null = null;
 	private _primitives: SeriesPrimitiveWrapper[] = [];
@@ -327,7 +327,7 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 		this.model().lightUpdate();
 	}
 
-	public setHorizLines(data: readonly SeriesHorizLine<InternalHorzScaleItem>[]): void {
+	public setHorizLines(data: SeriesHorizLine<UTCTimestamp>[]): void {
 		this._horizLines = data;
 		this._recalculateHorizLines();
 		const sourcePane = this.model().paneForSource(this);
@@ -342,7 +342,7 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 		return this._markers;
 	}
 
-	public horizLines(): readonly SeriesHorizLine<InternalHorzScaleItem>[] {
+	public horizLines(): SeriesHorizLine<UTCTimestamp>[] {
 		return this._horizLines;
 	}
 
@@ -350,7 +350,7 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 		return this._indexedMarkers;
 	}
 
-	public indexedHorizLines(): InternalSeriesHorizLine<TimePointIndex>[] {
+	public indexedHorizLines(): SeriesHorizLine<TimePointIndex>[] {
 		return this._indexedHorizLines;
 	}
 
@@ -773,15 +773,14 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 
 		const firstDataIndex = ensureNotNull(this._data.firstIndex());
 
-		this._indexedHorizLines = this._horizLines.map<InternalSeriesHorizLine<TimePointIndex>>((horizLine: SeriesHorizLine<InternalHorzScaleItem>, index: number) => {
+		this._indexedHorizLines = this._horizLines.map<SeriesHorizLine<TimePointIndex>>((horizLine: SeriesHorizLine<UTCTimestamp>, index: number) => {
 			// the first find index on the time scale (across all series)
 			let timePointIndex1 = undefined;
 			let seriesDataIndex1 = undefined;
 
-			if(horizLine.time1 !== undefined 
-				&& (horizLine.time1 as unknown as TimePoint).timestamp as unknown !== undefined) {
+			if(horizLine.time1 !== undefined) {
 
-				timePointIndex1 = ensureNotNull(timeScale.timeToIndex(horizLine.time1, true));
+				timePointIndex1 = ensureNotNull(timeScale.timeUtcToIndex(horizLine.time1, true));
 				const searchMode1 = timePointIndex1 < firstDataIndex ? MismatchDirection.NearestRight : MismatchDirection.NearestLeft;
 				seriesDataIndex1 = ensureNotNull(this._data.search(timePointIndex1, searchMode1)).index;
 			}
@@ -789,10 +788,9 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 			let timePointIndex2 = undefined;
 			let seriesDataIndex2 = undefined;
 
-			if(horizLine.time2 !== undefined 
-				&& (horizLine.time2 as unknown as TimePoint).timestamp as unknown !== undefined) {
+			if(horizLine.time2 !== undefined) {
 
-				timePointIndex2 = ensureNotNull(timeScale.timeToIndex(horizLine.time2, true));
+				timePointIndex2 = ensureNotNull(timeScale.timeUtcToIndex(horizLine.time2, true));
 				const searchMode2 = timePointIndex2 < firstDataIndex ? MismatchDirection.NearestRight : MismatchDirection.NearestLeft;
 				seriesDataIndex2 = ensureNotNull(this._data.search(timePointIndex2, searchMode2)).index;
 			}
@@ -802,12 +800,9 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 				time2: seriesDataIndex2,
 				color: horizLine.color,
 				id: horizLine.id,
-				internalId: index,
 				textLeft: horizLine.textLeft,
 				textRight: horizLine.textRight,
 				size: horizLine.size,
-				originalTime1: horizLine.originalTime1,
-				originalTime2: horizLine.originalTime2,
 				price: horizLine.price,
 				lineStyle: horizLine.lineStyle
 			};

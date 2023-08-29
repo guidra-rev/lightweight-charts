@@ -96,23 +96,12 @@ export interface SeriesHorizLine<TimeType> {
 	 * Line style
 	 */
 	lineStyle: LineStyle;
-	/**
-	 * @internal
-	 */
-	originalTime1: unknown;
-	/**
-	 * @internal
-	 */
-	originalTime2: unknown;
 }
 
 export interface InternalSeriesMarker<TimeType> extends SeriesMarker<TimeType> {
 	internalId: number;
 }
 
-export interface InternalSeriesHorizLine<TimeType> extends SeriesHorizLine<TimeType> {
-	internalId: number;
-}
 
 export function convertSeriesMarker<InTimeType, OutTimeType>(sm: SeriesMarker<InTimeType>, newTime: OutTimeType, originalTime?: unknown): SeriesMarker<OutTimeType> {
 	const { time: inTime, originalTime: inOriginalTime, ...values } = sm;
@@ -124,37 +113,6 @@ export function convertSeriesMarker<InTimeType, OutTimeType>(sm: SeriesMarker<In
 	/* eslint-enable @typescript-eslint/consistent-type-assertions */
 	if (originalTime !== undefined) {
 		res.originalTime = originalTime;
-	}
-	return res;
-}
-
-export function convertSeriesHorizLine<InTimeType, OutTimeType>(
-	sm: SeriesHorizLine<InTimeType>,
-	newTime1: OutTimeType,
-	newTime2: OutTimeType,
-	originalTime1?: unknown,
-	originalTime2?: unknown): SeriesHorizLine<OutTimeType> {
-
-	const { time1: inTime1,
-		originalTime1: inOriginalTime1,
-		time2: inTime2,
-		originalTime2: inOriginalTime2,
-		...values } = sm;
-
-	/* eslint-disable @typescript-eslint/consistent-type-assertions */
-	const res = {
-		time1: newTime1,
-		time2: newTime2,
-		...values,
-	} as SeriesHorizLine<OutTimeType>;
-
-	/* eslint-enable @typescript-eslint/consistent-type-assertions */
-	if (originalTime1 !== undefined) {
-		res.originalTime1 = originalTime1;
-	}
-
-	if (originalTime2 !== undefined) {
-		res.originalTime2 = originalTime2;
 	}
 	return res;
 }
