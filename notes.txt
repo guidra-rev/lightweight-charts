@@ -1,3 +1,4 @@
+// series-api.ts
 export class SeriesApi<...>{
     public setMarkers(data: SeriesMarker<Time>[]): void {
 		...
@@ -11,6 +12,7 @@ export class SeriesApi<...>{
 	}
 }
 
+// series.ts
 export class Series<...> {
     private _markers: readonly SeriesMarker<TimePoint>[] = [];
 	private _indexedMarkers: InternalSeriesMarker<TimePointIndex>[] = [];
@@ -34,7 +36,7 @@ export class Series<...> {
 	}
 }
 
-
+// series-markers-pane-view
 export class SeriesMarkersPaneView implements IUpdatablePaneView {
     protected _makeValid(): void {
         ...

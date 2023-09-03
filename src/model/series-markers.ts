@@ -75,10 +75,6 @@ export interface SeriesHorizLine<TimeType> {
 	 */
 	color: string;
 	/**
-	 * The ID of the marker.
-	 */
-	id?: string;
-	/**
 	 * The left text of the line.
 	 */
 	textLeft?: string;

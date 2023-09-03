@@ -799,7 +799,6 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 				time1: seriesDataIndex1,
 				time2: seriesDataIndex2,
 				color: horizLine.color,
-				id: horizLine.id,
 				textLeft: horizLine.textLeft,
 				textRight: horizLine.textRight,
 				size: horizLine.size,

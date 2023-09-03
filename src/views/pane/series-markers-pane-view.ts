@@ -243,7 +243,6 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 				y: 0 as Coordinate,
 				size: 0,
 				color: horizLine.color,
-				externalId: horizLine.id,
 				textLeft: undefined,
 				textRight: undefined,
 				lineStyle: horizLine.lineStyle
