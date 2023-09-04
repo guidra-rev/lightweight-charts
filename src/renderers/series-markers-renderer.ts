@@ -49,6 +49,15 @@ export interface SeriesHorizLineRendererDataItem{
 	lineStyle: LineStyle;
 }
 
+export interface SeriesRectangleRendererDataItem{
+	xLeft: Coordinate;
+	yTop: Coordinate;
+	width: number;
+	height: number;
+	backgroundColor: string;
+	borderColor?: string;
+}
+
 export interface SeriesMarkerRendererData {
 	items: SeriesMarkerRendererDataItem[];
 	visibleRange: SeriesItemsIndexesRange | null;
@@ -59,9 +68,15 @@ export interface SeriesHorizLineRendererData {
 	visibleRange: number[];
 }
 
+export interface SeriesRectangleRendererData {
+	items: SeriesRectangleRendererDataItem[];
+	visibleRange: number[];
+}
+
 export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 	private _data: SeriesMarkerRendererData | null = null;
 	private _dataHorizLines: SeriesHorizLineRendererData | null = null;
+	private _dataRectangles: SeriesRectangleRendererData | null = null;
 	private _textWidthCache: TextWidthCache = new TextWidthCache();
 	private _fontSize: number = -1;
 	private _fontFamily: string = '';
@@ -73,6 +88,10 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 
 	public setDataHorizLines(data: SeriesHorizLineRendererData): void {
 		this._dataHorizLines = data;
+	}
+
+	public setDataRectangles(data: SeriesRectangleRendererData): void {
+		this._dataRectangles = data;
 	}
 
 	public setParams(fontSize: number, fontFamily: string): void {
@@ -140,6 +159,7 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 				item.textLeft.height = this._fontSize;
 				item.textLeft.x = item.x1;
 				item.textLeft.y = item.y - 5 as Coordinate;
+				ctx.fillStyle = item.color;
 				drawText(ctx, item.textLeft.content, item.textLeft.x, item.textLeft.y);
 			}
 
@@ -148,6 +168,7 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 				item.textRight.height = this._fontSize;
 				item.textRight.x = item.x2 - item.textRight.width  as Coordinate;
 				item.textRight.y = item.y - 5 as Coordinate;
+				ctx.fillStyle = item.color;
 				drawText(ctx, item.textRight.content, item.textRight.x, item.textRight.y);
 			}
 
@@ -155,8 +176,32 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 		}
 	}
 
+	private _drawImplRectangles(ctx: CanvasRenderingContext2D, isHovered: boolean, hitTestData?: unknown): void {
+		if (this._dataRectangles === null || this._dataRectangles.visibleRange.length === 0) {
+			return;
+		}
+
+		for (let i = 0; i < this._dataRectangles.items.length; i++) {
+			if(!this._dataRectangles.visibleRange.includes(i))
+				continue;
+
+			const item = this._dataRectangles.items[i];
+
+			// bg
+			ctx.fillStyle = item.backgroundColor;
+			ctx.fillRect(item.xLeft, item.yTop, item.width, item.height);
+
+			// border
+			if(item.borderColor !== undefined){
+			ctx.strokeStyle = item.borderColor;
+			ctx.strokeRect(item.xLeft, item.yTop, item.width, item.height);	
+			}
+		}
+	}
+
 	protected _drawImpl({ context: ctx }: MediaCoordinatesRenderingScope, isHovered: boolean, hitTestData?: unknown): void {
 		this._drawImplMarkers(ctx, isHovered, hitTestData);
+		this._drawImplRectangles(ctx, isHovered, hitTestData);
 		this._drawImplHorizLines(ctx, isHovered, hitTestData);
 	}
 }

@@ -94,6 +94,15 @@ export interface SeriesHorizLine<TimeType> {
 	lineStyle: LineStyle;
 }
 
+export interface SeriesRectangle<TimeType> {
+	time1: TimeType;
+	time2: TimeType;
+	priceBot: number;
+	priceTop: number;
+	backgroundColor: string;
+	borderColor?: string;
+}
+
 export interface InternalSeriesMarker<TimeType> extends SeriesMarker<TimeType> {
 	internalId: number;
 }

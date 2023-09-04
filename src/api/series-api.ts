@@ -17,7 +17,7 @@ import { CreatePriceLineOptions, PriceLineOptions } from '../model/price-line-op
 import { RangeImpl } from '../model/range-impl';
 import { Series } from '../model/series';
 import { SeriesPlotRow } from '../model/series-data';
-import { convertSeriesMarker, SeriesHorizLine, SeriesMarker } from '../model/series-markers';
+import { convertSeriesMarker, SeriesHorizLine, SeriesMarker, SeriesRectangle } from '../model/series-markers';
 import {
 	SeriesOptionsMap,
 	SeriesPartialOptionsMap,
@@ -198,6 +198,10 @@ export class SeriesApi<
 		this._series.setHorizLines(data);
 	}
 
+	public setRectangles(data: SeriesRectangle<UTCTimestamp>[]): void {
+		this._series.setRectangles(data);
+	}
+
 	public markers(): SeriesMarker<HorzScaleItem>[] {
 		return this._series.markers().map<SeriesMarker<HorzScaleItem>>((internalItem: SeriesMarker<InternalHorzScaleItem>) => {
 			return convertSeriesMarker<InternalHorzScaleItem, HorzScaleItem>(internalItem, internalItem.originalTime as HorzScaleItem, undefined);
@@ -206,6 +210,10 @@ export class SeriesApi<
 
 	public horizLines(): SeriesHorizLine<UTCTimestamp>[] {
 		return this._series.horizLines();
+	}
+
+	public rectangles(): SeriesRectangle<UTCTimestamp>[]{
+		return this._series.rectangles();
 	}
 
 	public applyOptions(options: TPartialOptions): void {

@@ -7,7 +7,7 @@ import { IChartModelBase } from '../../model/chart-model';
 import { Coordinate } from '../../model/coordinate';
 import { PriceScale } from '../../model/price-scale';
 import { ISeries } from '../../model/series';
-import { InternalSeriesMarker, SeriesHorizLine } from '../../model/series-markers';
+import { InternalSeriesMarker, SeriesHorizLine, SeriesRectangle } from '../../model/series-markers';
 import { SeriesType } from '../../model/series-options';
 import { TimePointIndex, visibleTimedValues } from '../../model/time-data';
 import { ITimeScale } from '../../model/time-scale';
@@ -18,6 +18,8 @@ import {
 	SeriesMarkerRendererData,
 	SeriesMarkerRendererDataItem,
 	SeriesMarkersRenderer,
+	SeriesRectangleRendererData,
+	SeriesRectangleRendererDataItem,
 } from '../../renderers/series-markers-renderer';
 import {
 	calculateShapeHeight,
@@ -89,12 +91,16 @@ function fillSizeAndY(
 export class SeriesMarkersPaneView implements IUpdatablePaneView {
 	private readonly _series: ISeries<SeriesType>;
 	private readonly _model: IChartModelBase;
+
 	private _dataMarkers: SeriesMarkerRendererData;
 	private _dataHorizLines: SeriesHorizLineRendererData;
+	private _dataRectangles: SeriesRectangleRendererData;
 
 	private _invalidated: boolean = true;
 	private _dataInvalidatedMarkers: boolean = true;
 	private _dataInvalidatedHorizLines: boolean = true;
+	private _dataInvalidatedRectangles: boolean = true;
+
 	private _autoScaleMarginsInvalidated: boolean = true;
 
 	private _autoScaleMargins: AutoScaleMargins | null = null;
@@ -109,6 +115,10 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 			visibleRange: null,
 		};
 		this._dataHorizLines = {
+			items: [],
+			visibleRange: [],
+		};
+		this._dataRectangles = {
 			items: [],
 			visibleRange: [],
 		};
@@ -136,6 +146,7 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 		this._renderer.setParams(layout.fontSize, layout.fontFamily);
 		this._renderer.setDataMarkers(this._dataMarkers);
 		this._renderer.setDataHorizLines(this._dataHorizLines);
+		this._renderer.setDataRectangles(this._dataRectangles);
 
 		return this._renderer;
 	}
@@ -314,9 +325,65 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 		}
 	}
 
+	private _makeValidRectangles(): void{
+		const priceScale = this._series.priceScale();
+		const timeScale = this._model.timeScale();
+		const seriesRectangles = this._series.indexedRectangles();
+		if (this._dataInvalidatedRectangles) {
+			this._dataRectangles.items = seriesRectangles.map<SeriesRectangleRendererDataItem>((rectangle: SeriesRectangle<TimePointIndex>) => ({
+				xLeft: 0 as Coordinate,
+				yTop: 0 as Coordinate,
+				width: 0 as number,
+				height: 0 as number,
+				backgroundColor: rectangle.backgroundColor,
+				borderColor: rectangle.borderColor
+			}));
+			this._dataInvalidatedRectangles = false;
+		}
+
+		this._dataRectangles.visibleRange = [];
+		const visibleBars = timeScale.visibleStrictRange();
+		if (visibleBars === null) {
+			return;
+		}
+
+		const firstValue = this._series.firstValue();
+		if (firstValue === null) {
+			return;
+		}
+		if (this._dataRectangles.items.length === 0) {
+			return;
+		}
+
+		for (let index = 0; index < this._dataRectangles.items.length; index++) {
+			const rectangle = seriesRectangles[index];
+
+			// don't render if outside of screen
+			const tooFarLeft = rectangle.time2 < visibleBars.left();
+			if(tooFarLeft)
+				continue;
+
+			const tooFarRight = rectangle.time1 > visibleBars.right();
+			if(tooFarRight)
+				continue;
+			
+			this._dataRectangles.visibleRange.push(index);
+
+			const rendererItem = this._dataRectangles.items[index];
+
+			rendererItem.xLeft = timeScale.indexToCoordinate(rectangle.time1);
+			const xRight = timeScale.indexToCoordinate(rectangle.time2);
+			rendererItem.yTop = priceScale.priceToCoordinate(rectangle.priceTop, firstValue.value);
+			const yBottom = priceScale.priceToCoordinate(rectangle.priceBot, firstValue.value);
+			rendererItem.width = xRight - rendererItem.xLeft;
+			rendererItem.height = yBottom - rendererItem.yTop;
+		}
+	}
+
 	protected _makeValid(): void {
 		this._makeValidMarkers();
 		this._makeValidHorizLines();
+		this._makeValidRectangles();
 		this._invalidated = false;
 	}
 }

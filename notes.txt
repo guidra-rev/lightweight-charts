@@ -58,6 +58,7 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 	}
 }
 
+// series-markers-renderer
 export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
     private _data: SeriesMarkerRendererData | null = null;
 
