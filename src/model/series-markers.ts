@@ -8,7 +8,7 @@ export type SeriesMarkerPosition = 'aboveBar' | 'belowBar' | 'inBar';
 /**
  * Represents the shape of a series marker.
  */
-export type SeriesMarkerShape = 'circle' | 'square' | 'arrowUp' | 'arrowDown' | 'vertLine';
+export type SeriesMarkerShape = 'circle' | 'square' | 'arrowUp' | 'arrowDown';
 
 /**
  * Represents a series marker.
@@ -88,6 +88,37 @@ export interface SeriesHorizLine<TimeType> {
 	 * @defaultValue `1`
 	 */
 	size?: number;
+	/**
+	 * Line style
+	 */
+	lineStyle: LineStyle;
+}
+
+export interface SeriesVertLine<TimeType> {
+	/**
+	 * The time of the line
+	 */
+	time: TimeType;
+
+	/**
+	 * Top price of the line, if undefined, it's extended
+	 */
+	priceHigh?: number;
+
+	/**
+	 * Low price of the line, if undefined, it's extended
+	 */
+	priceLow?: number;
+
+	/**
+	 * The color of the marker.
+	 */
+	color: string;
+	/**
+	 * The optional size of the line.
+	 *
+	 */
+	size: number;
 	/**
 	 * Line style
 	 */

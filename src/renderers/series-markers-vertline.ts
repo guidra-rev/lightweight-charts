@@ -1,10 +1,10 @@
-import { Coordinate } from '../model/coordinate';
 import { LineStyle, drawHorizontalLine, drawVerticalLine, setLineStyle } from './draw-line';
 
 export function drawVertLine(
 	ctx: CanvasRenderingContext2D,
-	centerX: Coordinate,
-	centerY: Coordinate,
+	x: number,
+	top: number,
+	bottom: number,
 	size: number,
 	color: string,
 	lineStyle: LineStyle
@@ -13,7 +13,7 @@ export function drawVertLine(
 	ctx.strokeStyle = color;
 	setLineStyle(ctx, lineStyle);
 
-	drawVerticalLine(ctx, centerX, 0, ctx.canvas.height);
+	drawVerticalLine(ctx, x, top, bottom);
 }
 
 

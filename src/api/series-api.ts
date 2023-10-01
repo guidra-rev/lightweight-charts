@@ -17,7 +17,7 @@ import { CreatePriceLineOptions, PriceLineOptions } from '../model/price-line-op
 import { RangeImpl } from '../model/range-impl';
 import { Series } from '../model/series';
 import { SeriesPlotRow } from '../model/series-data';
-import { convertSeriesMarker, SeriesHorizLine, SeriesMarker, SeriesRectangle } from '../model/series-markers';
+import { convertSeriesMarker, SeriesHorizLine, SeriesMarker, SeriesRectangle, SeriesVertLine } from '../model/series-markers';
 import {
 	SeriesOptionsMap,
 	SeriesPartialOptionsMap,
@@ -43,8 +43,8 @@ export class SeriesApi<
 	TOptions extends SeriesOptionsMap[TSeriesType] = SeriesOptionsMap[TSeriesType],
 	TPartialOptions extends SeriesPartialOptionsMap[TSeriesType] = SeriesPartialOptionsMap[TSeriesType]
 > implements
-		ISeriesApi<TSeriesType, HorzScaleItem, TData, TOptions, TPartialOptions>,
-		IDestroyable {
+	ISeriesApi<TSeriesType, HorzScaleItem, TData, TOptions, TPartialOptions>,
+	IDestroyable {
 	protected _series: Series<TSeriesType>;
 	protected _dataUpdatesConsumer: DataUpdatesConsumer<TSeriesType, HorzScaleItem>;
 	protected readonly _chartApi: IChartApiBase<HorzScaleItem>;
@@ -198,6 +198,10 @@ export class SeriesApi<
 		this._series.setHorizLines(data);
 	}
 
+	public setVertLines(data: SeriesVertLine<UTCTimestamp>[]): void {
+		this._series.setVertLines(data);
+	}
+
 	public setRectangles(data: SeriesRectangle<UTCTimestamp>[]): void {
 		this._series.setRectangles(data);
 	}
@@ -212,7 +216,11 @@ export class SeriesApi<
 		return this._series.horizLines();
 	}
 
-	public rectangles(): SeriesRectangle<UTCTimestamp>[]{
+	public vertLines(): SeriesVertLine<UTCTimestamp>[] {
+		return this._series.vertLines();
+	}
+
+	public rectangles(): SeriesRectangle<UTCTimestamp>[] {
 		return this._series.rectangles();
 	}
 

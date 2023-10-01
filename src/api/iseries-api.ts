@@ -6,7 +6,7 @@ import { SeriesDataItemTypeMap } from '../model/data-consumer';
 import { Time, UTCTimestamp } from '../model/horz-scale-behavior-time/types';
 import { MismatchDirection } from '../model/plot-list';
 import { CreatePriceLineOptions } from '../model/price-line-options';
-import { SeriesHorizLine, SeriesMarker, SeriesRectangle } from '../model/series-markers';
+import { SeriesHorizLine, SeriesMarker, SeriesRectangle, SeriesVertLine } from '../model/series-markers';
 import {
 	SeriesOptionsMap,
 	SeriesPartialOptionsMap,
@@ -58,7 +58,7 @@ export interface ISeriesApi<
 	TData = SeriesDataItemTypeMap<HorzScaleItem>[TSeriesType],
 	TOptions = SeriesOptionsMap[TSeriesType],
 	TPartialOptions = SeriesPartialOptionsMap[TSeriesType],
-	> {
+> {
 	/**
 	 * Returns current price formatter
 	 *
@@ -272,6 +272,7 @@ export interface ISeriesApi<
 	setMarkers(data: SeriesMarker<HorzScaleItem>[]): void;
 
 	setHorizLines(data: SeriesHorizLine<UTCTimestamp>[]): void;
+	setVertLines(data: SeriesVertLine<UTCTimestamp>[]): void;
 
 	setRectangles(data: SeriesRectangle<UTCTimestamp>[]): void;
 

@@ -7,7 +7,7 @@ import { IChartModelBase } from '../../model/chart-model';
 import { Coordinate } from '../../model/coordinate';
 import { PriceScale } from '../../model/price-scale';
 import { ISeries } from '../../model/series';
-import { InternalSeriesMarker, SeriesHorizLine, SeriesRectangle } from '../../model/series-markers';
+import { InternalSeriesMarker, SeriesHorizLine, SeriesRectangle, SeriesVertLine } from '../../model/series-markers';
 import { SeriesType } from '../../model/series-options';
 import { TimePointIndex, visibleTimedValues } from '../../model/time-data';
 import { ITimeScale } from '../../model/time-scale';
@@ -20,6 +20,8 @@ import {
 	SeriesMarkersRenderer,
 	SeriesRectangleRendererData,
 	SeriesRectangleRendererDataItem,
+	SeriesVertLineRendererData,
+	SeriesVertLineRendererDataItem,
 } from '../../renderers/series-markers-renderer';
 import {
 	calculateShapeHeight,
@@ -94,11 +96,13 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 
 	private _dataMarkers: SeriesMarkerRendererData;
 	private _dataHorizLines: SeriesHorizLineRendererData;
+	private _dataVertLines: SeriesVertLineRendererData;
 	private _dataRectangles: SeriesRectangleRendererData;
 
 	private _invalidated: boolean = true;
 	private _dataInvalidatedMarkers: boolean = true;
 	private _dataInvalidatedHorizLines: boolean = true;
+	private _dataInvalidatedVertLines: boolean = true;
 	private _dataInvalidatedRectangles: boolean = true;
 
 	private _autoScaleMarginsInvalidated: boolean = true;
@@ -115,6 +119,10 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 			visibleRange: null,
 		};
 		this._dataHorizLines = {
+			items: [],
+			visibleRange: [],
+		};
+		this._dataVertLines = {
 			items: [],
 			visibleRange: [],
 		};
@@ -146,6 +154,7 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 		this._renderer.setParams(layout.fontSize, layout.fontFamily);
 		this._renderer.setDataMarkers(this._dataMarkers);
 		this._renderer.setDataHorizLines(this._dataHorizLines);
+		this._renderer.setDataVertLines(this._dataVertLines);
 		this._renderer.setDataRectangles(this._dataRectangles);
 
 		return this._renderer;
@@ -171,7 +180,7 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 		return this._autoScaleMargins;
 	}
 
-	private _makeValidMarkers(): void{
+	private _makeValidMarkers(): void {
 		const priceScale = this._series.priceScale();
 		const timeScale = this._model.timeScale();
 		const seriesMarkers = this._series.indexedMarkers();
@@ -241,7 +250,7 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 		}
 	}
 
-	private _makeValidHorizLines(): void{
+	private _makeValidHorizLines(): void {
 		const priceScale = this._series.priceScale();
 		const timeScale = this._model.timeScale();
 		const seriesHorizLines = this._series.indexedHorizLines();
@@ -282,23 +291,23 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 
 			// don't render lignes outside of screen
 			const tooFarLeft = horizLine.time2 !== undefined && horizLine.time2 < visibleBars.left();
-			if(tooFarLeft)
+			if (tooFarLeft)
 				continue;
 
 			const tooFarRight = horizLine.time1 !== undefined && horizLine.time1 > visibleBars.right();
-			if(tooFarRight)
+			if (tooFarRight)
 				continue;
-			
+
 			this._dataHorizLines.visibleRange.push(index);
 
 			const rendererItem = this._dataHorizLines.items[index];
 
 			rendererItem.x1 = 0 as Coordinate;
-			if(horizLine.time1 !== undefined)
+			if (horizLine.time1 !== undefined)
 				rendererItem.x1 = timeScale.indexToCoordinate(horizLine.time1);
 
 			rendererItem.x2 = 10000 as Coordinate;
-			if(horizLine.time2 !== undefined)
+			if (horizLine.time2 !== undefined)
 				rendererItem.x2 = timeScale.indexToCoordinate(horizLine.time2);
 
 			if (horizLine.textLeft !== undefined && horizLine.textLeft.length > 0) {
@@ -325,7 +334,70 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 		}
 	}
 
-	private _makeValidRectangles(): void{
+	private _makeValidVertLines(): void {
+		const priceScale = this._series.priceScale();
+		const timeScale = this._model.timeScale();
+		const seriesVertLines = this._series.indexedVertLines();
+		if (this._dataInvalidatedVertLines) {
+			this._dataVertLines.items = seriesVertLines.map<SeriesVertLineRendererDataItem>((vertLine: SeriesVertLine<TimePointIndex>) => ({
+				time: vertLine.time,
+				x: 0 as Coordinate,
+				yHigh: 0 as Coordinate,
+				yLow: 0 as Coordinate,
+				size: 0,
+				color: vertLine.color,
+				lineStyle: vertLine.lineStyle
+			}));
+			this._dataInvalidatedVertLines = false;
+		}
+
+		// const layoutOptions = this._model.options().layout;
+
+		this._dataVertLines.visibleRange = [];
+		const visibleBars = timeScale.visibleStrictRange();
+		if (visibleBars === null) {
+			return;
+		}
+
+		const firstValue = this._series.firstValue();
+		if (firstValue === null) {
+			return;
+		}
+		if (this._dataVertLines.items.length === 0) {
+			return;
+		}
+
+		for (let index = 0; index < this._dataVertLines.items.length; index++) {
+			const vertLine = seriesVertLines[index];
+
+			// don't render lignes outside of screen
+			const tooFarLeft = vertLine.time < visibleBars.left();
+			if (tooFarLeft)
+				continue;
+
+			const tooFarRight = vertLine.time > visibleBars.right();
+			if (tooFarRight)
+				continue;
+
+			this._dataVertLines.visibleRange.push(index);
+
+			const rendererItem = this._dataVertLines.items[index];
+
+			rendererItem.x = timeScale.indexToCoordinate(vertLine.time);
+
+			rendererItem.yHigh = 0 as Coordinate
+			if (vertLine.priceHigh !== undefined) {
+				rendererItem.yHigh = priceScale.priceToCoordinate(vertLine.priceHigh, firstValue.value);
+			}
+
+			rendererItem.yLow = 10000 as Coordinate
+			if (vertLine.priceLow !== undefined) {
+				rendererItem.yLow = priceScale.priceToCoordinate(vertLine.priceLow, firstValue.value);
+			}
+		}
+	}
+
+	private _makeValidRectangles(): void {
 		const priceScale = this._series.priceScale();
 		const timeScale = this._model.timeScale();
 		const seriesRectangles = this._series.indexedRectangles();
@@ -360,13 +432,13 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 
 			// don't render if outside of screen
 			const tooFarLeft = rectangle.time2 < visibleBars.left();
-			if(tooFarLeft)
+			if (tooFarLeft)
 				continue;
 
 			const tooFarRight = rectangle.time1 > visibleBars.right();
-			if(tooFarRight)
+			if (tooFarRight)
 				continue;
-			
+
 			this._dataRectangles.visibleRange.push(index);
 
 			const rendererItem = this._dataRectangles.items[index];
@@ -383,6 +455,7 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 	protected _makeValid(): void {
 		this._makeValidMarkers();
 		this._makeValidHorizLines();
+		this._makeValidVertLines();
 		this._makeValidRectangles();
 		this._invalidated = false;
 	}

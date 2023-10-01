@@ -36,7 +36,7 @@ export interface SeriesMarkerRendererDataItem extends TimedValue {
 	lineStyle: LineStyle;
 }
 
-export interface SeriesHorizLineRendererDataItem{
+export interface SeriesHorizLineRendererDataItem {
 	time1?: TimePointIndex;
 	time2?: TimePointIndex;
 	x1: Coordinate;
@@ -49,7 +49,17 @@ export interface SeriesHorizLineRendererDataItem{
 	lineStyle: LineStyle;
 }
 
-export interface SeriesRectangleRendererDataItem{
+export interface SeriesVertLineRendererDataItem {
+	time: TimePointIndex;
+	x: Coordinate;
+	yHigh: Coordinate;
+	yLow: Coordinate;
+	size: number;
+	color: string;
+	lineStyle: LineStyle;
+}
+
+export interface SeriesRectangleRendererDataItem {
 	xLeft: Coordinate;
 	yTop: Coordinate;
 	width: number;
@@ -68,6 +78,11 @@ export interface SeriesHorizLineRendererData {
 	visibleRange: number[];
 }
 
+export interface SeriesVertLineRendererData {
+	items: SeriesVertLineRendererDataItem[];
+	visibleRange: number[];
+}
+
 export interface SeriesRectangleRendererData {
 	items: SeriesRectangleRendererDataItem[];
 	visibleRange: number[];
@@ -76,6 +91,7 @@ export interface SeriesRectangleRendererData {
 export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 	private _data: SeriesMarkerRendererData | null = null;
 	private _dataHorizLines: SeriesHorizLineRendererData | null = null;
+	private _dataVertLines: SeriesVertLineRendererData | null = null;
 	private _dataRectangles: SeriesRectangleRendererData | null = null;
 	private _textWidthCache: TextWidthCache = new TextWidthCache();
 	private _fontSize: number = -1;
@@ -88,6 +104,10 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 
 	public setDataHorizLines(data: SeriesHorizLineRendererData): void {
 		this._dataHorizLines = data;
+	}
+
+	public setDataVertLines(data: SeriesVertLineRendererData): void {
+		this._dataVertLines = data;
 	}
 
 	public setDataRectangles(data: SeriesRectangleRendererData): void {
@@ -140,6 +160,21 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 		}
 	}
 
+	private _drawImplVertLines(ctx: CanvasRenderingContext2D, isHovered: boolean, hitTestData?: unknown): void {
+		if (this._dataVertLines === null || this._dataVertLines.visibleRange.length === 0) {
+			return;
+		}
+
+		for (let i = 0; i < this._dataVertLines.items.length; i++) {
+			if (!this._dataVertLines.visibleRange.includes(i))
+				continue;
+
+			const item = this._dataVertLines.items[i];
+
+			drawVertLine(ctx, item.x, item.yHigh, item.yLow, item.size, item.color, item.lineStyle);
+		}
+	}
+
 	private _drawImplHorizLines(ctx: CanvasRenderingContext2D, isHovered: boolean, hitTestData?: unknown): void {
 		if (this._dataHorizLines === null || this._dataHorizLines.visibleRange.length === 0) {
 			return;
@@ -149,7 +184,7 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 		ctx.font = this._font;
 
 		for (let i = 0; i < this._dataHorizLines.items.length; i++) {
-			if(!this._dataHorizLines.visibleRange.includes(i))
+			if (!this._dataHorizLines.visibleRange.includes(i))
 				continue;
 
 			const item = this._dataHorizLines.items[i];
@@ -166,7 +201,7 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 			if (item.textRight !== undefined && item.x2 !== 10000) {
 				item.textRight.width = this._textWidthCache.measureText(ctx, item.textRight.content);
 				item.textRight.height = this._fontSize;
-				item.textRight.x = item.x2 - item.textRight.width  as Coordinate;
+				item.textRight.x = item.x2 - item.textRight.width as Coordinate;
 				item.textRight.y = item.y - 5 as Coordinate;
 				ctx.fillStyle = item.color;
 				drawText(ctx, item.textRight.content, item.textRight.x, item.textRight.y);
@@ -182,7 +217,7 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 		}
 
 		for (let i = 0; i < this._dataRectangles.items.length; i++) {
-			if(!this._dataRectangles.visibleRange.includes(i))
+			if (!this._dataRectangles.visibleRange.includes(i))
 				continue;
 
 			const item = this._dataRectangles.items[i];
@@ -192,15 +227,16 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 			ctx.fillRect(item.xLeft, item.yTop, item.width, item.height);
 
 			// border
-			if(item.borderColor !== undefined){
-			ctx.strokeStyle = item.borderColor;
-			ctx.strokeRect(item.xLeft, item.yTop, item.width, item.height);	
+			if (item.borderColor !== undefined) {
+				ctx.strokeStyle = item.borderColor;
+				ctx.strokeRect(item.xLeft, item.yTop, item.width, item.height);
 			}
 		}
 	}
 
 	protected _drawImpl({ context: ctx }: MediaCoordinatesRenderingScope, isHovered: boolean, hitTestData?: unknown): void {
 		this._drawImplMarkers(ctx, isHovered, hitTestData);
+		this._drawImplVertLines(ctx, isHovered, hitTestData);
 		this._drawImplRectangles(ctx, isHovered, hitTestData);
 		this._drawImplHorizLines(ctx, isHovered, hitTestData);
 	}
@@ -234,9 +270,6 @@ function drawShape(item: SeriesMarkerRendererDataItem, ctx: CanvasRenderingConte
 		case 'square':
 			drawSquare(ctx, item.x, item.y, item.size);
 			return;
-		case 'vertLine':
-			drawVertLine(ctx, item.x, item.y, item.size, item.color, item.lineStyle);
-			return;
 	}
 
 	ensureNever(item.shape);
@@ -263,8 +296,6 @@ function hitTestShape(item: SeriesMarkerRendererDataItem, x: Coordinate, y: Coor
 		case 'circle':
 			return hitTestCircle(item.x, item.y, item.size, x, y);
 		case 'square':
-			return hitTestSquare(item.x, item.y, item.size, x, y);
-		case 'vertLine':
 			return hitTestSquare(item.x, item.y, item.size, x, y);
 	}
 }

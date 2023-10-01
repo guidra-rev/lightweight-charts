@@ -22,8 +22,6 @@ export function shapeSize(shape: SeriesMarkerShape, originalSize: number): numbe
 			return size(originalSize, 0.8);
 		case 'square':
 			return size(originalSize, 0.7);
-		case 'vertLine':
-			return originalSize;
 	}
 }
 

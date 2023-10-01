@@ -45,7 +45,7 @@ import { PriceRangeImpl } from './price-range-impl';
 import { PriceScale } from './price-scale';
 import { ISeriesBarColorer, SeriesBarColorer } from './series-bar-colorer';
 import { createSeriesPlotList, SeriesPlotList, SeriesPlotRow } from './series-data';
-import { InternalSeriesMarker, SeriesHorizLine, SeriesMarker, SeriesRectangle } from './series-markers';
+import { InternalSeriesMarker, SeriesHorizLine, SeriesMarker, SeriesRectangle, SeriesVertLine } from './series-markers';
 import {
 	AreaStyleOptions,
 	BaselineStyleOptions,
@@ -140,6 +140,7 @@ export interface ISeries<T extends SeriesType> extends IPriceDataSource {
 	lastValueData(globalLast: boolean): LastValueDataResult;
 	indexedMarkers(): InternalSeriesMarker<TimePointIndex>[];
 	indexedHorizLines(): SeriesHorizLine<TimePointIndex>[];
+	indexedVertLines(): SeriesVertLine<TimePointIndex>[];
 	indexedRectangles(): SeriesRectangle<TimePointIndex>[];
 	barColorer(): ISeriesBarColorer<T>;
 	markerDataAtIndex(index: TimePointIndex): MarkerData | null;
@@ -161,9 +162,11 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 	private readonly _options: SeriesOptionsInternal<T>;
 	private _markers: readonly SeriesMarker<InternalHorzScaleItem>[] = [];
 	private _horizLines: SeriesHorizLine<UTCTimestamp>[] = [];
+	private _vertLines: SeriesVertLine<UTCTimestamp>[] = [];
 	private _rectangles: SeriesRectangle<UTCTimestamp>[] = [];
 	private _indexedMarkers: InternalSeriesMarker<TimePointIndex>[] = [];
 	private _indexedHorizLines: SeriesHorizLine<TimePointIndex>[] = [];
+	private _indexedVertLines: SeriesVertLine<TimePointIndex>[] = [];
 	private _indexedRectangles: SeriesRectangle<TimePointIndex>[] = [];
 	private _markersPaneView!: SeriesMarkersPaneView;
 	private _animationTimeoutId: TimerId | null = null;
@@ -341,6 +344,17 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 		this.model().lightUpdate();
 	}
 
+	public setVertLines(data: SeriesVertLine<UTCTimestamp>[]): void {
+		this._vertLines = data;
+		this._recalculateVertLines();
+		const sourcePane = this.model().paneForSource(this);
+		this._markersPaneView.update('data');
+		this.model().recalculatePane(sourcePane);
+		this.model().updateSource(this);
+		this.model().updateCrosshair();
+		this.model().lightUpdate();
+	}
+
 	public setRectangles(data: SeriesRectangle<UTCTimestamp>[]): void {
 		this._rectangles = data;
 		this._recalculateRectangles();
@@ -360,6 +374,10 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 		return this._horizLines;
 	}
 
+	public vertLines(): SeriesVertLine<UTCTimestamp>[] {
+		return this._vertLines;
+	}
+
 	public rectangles(): SeriesRectangle<UTCTimestamp>[] {
 		return this._rectangles;
 	}
@@ -370,6 +388,10 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 
 	public indexedHorizLines(): SeriesHorizLine<TimePointIndex>[] {
 		return this._indexedHorizLines;
+	}
+
+	public indexedVertLines(): SeriesVertLine<TimePointIndex>[] {
+		return this._indexedVertLines;
 	}
 
 	public indexedRectangles(): SeriesRectangle<TimePointIndex>[] {
@@ -672,7 +694,7 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 			}
 		});
 
-		return new AutoscaleInfoImpl(range,	margins);
+		return new AutoscaleInfoImpl(range, margins);
 	}
 
 	private _markerRadius(): number {
@@ -800,7 +822,7 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 			let timePointIndex1 = undefined;
 			let seriesDataIndex1 = undefined;
 
-			if(horizLine.time1 !== undefined) {
+			if (horizLine.time1 !== undefined) {
 
 				timePointIndex1 = ensureNotNull(timeScale.timeUtcToIndex(horizLine.time1, true));
 				const searchMode1 = timePointIndex1 < firstDataIndex ? MismatchDirection.NearestRight : MismatchDirection.NearestLeft;
@@ -810,7 +832,7 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 			let timePointIndex2 = undefined;
 			let seriesDataIndex2 = undefined;
 
-			if(horizLine.time2 !== undefined) {
+			if (horizLine.time2 !== undefined) {
 
 				timePointIndex2 = ensureNotNull(timeScale.timeUtcToIndex(horizLine.time2, true));
 				const searchMode2 = timePointIndex2 < firstDataIndex ? MismatchDirection.NearestRight : MismatchDirection.NearestLeft;
@@ -830,6 +852,32 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 		});
 	}
 
+	private _recalculateVertLines(): void {
+		const timeScale = this.model().timeScale();
+		if (!timeScale.hasPoints() || this._data.isEmpty()) {
+			this._indexedVertLines = [];
+			return;
+		}
+
+		const firstDataIndex = ensureNotNull(this._data.firstIndex());
+
+		this._indexedVertLines = this._vertLines.map<SeriesVertLine<TimePointIndex>>((vertLine: SeriesVertLine<UTCTimestamp>, index: number) => {
+
+			const timePointIndex = ensureNotNull(timeScale.timeUtcToIndex(vertLine.time, true));
+			const searchMode = timePointIndex < firstDataIndex ? MismatchDirection.NearestRight : MismatchDirection.NearestLeft;
+			const seriesDataIndex = ensureNotNull(this._data.search(timePointIndex, searchMode)).index;
+
+			return {
+				time: seriesDataIndex,
+				color: vertLine.color,
+				size: vertLine.size,
+				priceHigh: vertLine.priceHigh,
+				priceLow: vertLine.priceLow,
+				lineStyle: vertLine.lineStyle
+			};
+		});
+	}
+
 	private _recalculateRectangles(): void {
 		const timeScale = this.model().timeScale();
 		if (!timeScale.hasPoints() || this._data.isEmpty()) {
@@ -845,11 +893,11 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 			const timePointIndex1 = ensureNotNull(timeScale.timeUtcToIndex(rect.time1, true));
 			const searchMode1 = timePointIndex1 < firstDataIndex ? MismatchDirection.NearestRight : MismatchDirection.NearestLeft;
 			const seriesDataIndex1 = ensureNotNull(this._data.search(timePointIndex1, searchMode1)).index;
-			
+
 			const timePointIndex2 = ensureNotNull(timeScale.timeUtcToIndex(rect.time2, true));
 			const searchMode2 = timePointIndex2 < firstDataIndex ? MismatchDirection.NearestRight : MismatchDirection.NearestLeft;
 			const seriesDataIndex2 = ensureNotNull(this._data.search(timePointIndex2, searchMode2)).index;
-			
+
 
 			return {
 				time1: seriesDataIndex1,
