@@ -7,7 +7,7 @@ import { IChartModelBase } from '../../model/chart-model';
 import { Coordinate } from '../../model/coordinate';
 import { PriceScale } from '../../model/price-scale';
 import { ISeries } from '../../model/series';
-import { InternalSeriesMarker, SeriesHorizLine, SeriesRectangle, SeriesVertLine } from '../../model/series-markers';
+import { InternalSeriesMarker, SeriesHorizLine, SeriesRectangle, SeriesText, SeriesVertLine } from '../../model/series-markers';
 import { SeriesType } from '../../model/series-options';
 import { TimePointIndex, visibleTimedValues } from '../../model/time-data';
 import { ITimeScale } from '../../model/time-scale';
@@ -20,6 +20,8 @@ import {
 	SeriesMarkersRenderer,
 	SeriesRectangleRendererData,
 	SeriesRectangleRendererDataItem,
+	SeriesTextRendererData,
+	SeriesTextRendererDataItem,
 	SeriesVertLineRendererData,
 	SeriesVertLineRendererDataItem,
 } from '../../renderers/series-markers-renderer';
@@ -98,12 +100,14 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 	private _dataHorizLines: SeriesHorizLineRendererData;
 	private _dataVertLines: SeriesVertLineRendererData;
 	private _dataRectangles: SeriesRectangleRendererData;
+	private _dataText: SeriesTextRendererData;
 
 	private _invalidated: boolean = true;
 	private _dataInvalidatedMarkers: boolean = true;
 	private _dataInvalidatedHorizLines: boolean = true;
 	private _dataInvalidatedVertLines: boolean = true;
 	private _dataInvalidatedRectangles: boolean = true;
+	private _dataInvalidatedText: boolean = true;
 
 	private _autoScaleMarginsInvalidated: boolean = true;
 
@@ -130,14 +134,22 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 			items: [],
 			visibleRange: [],
 		};
+		this._dataText = {
+			items: [],
+			visibleRange: [],
+		};
 	}
 
 	public update(updateType?: UpdateType): void {
 		this._invalidated = true;
 		this._autoScaleMarginsInvalidated = true;
+
 		if (updateType === 'data') {
 			this._dataInvalidatedMarkers = true;
 			this._dataInvalidatedHorizLines = true;
+			this._dataInvalidatedVertLines = true;
+			this._dataInvalidatedRectangles = true;
+			this._dataInvalidatedText = true;
 		}
 	}
 
@@ -156,6 +168,7 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 		this._renderer.setDataHorizLines(this._dataHorizLines);
 		this._renderer.setDataVertLines(this._dataVertLines);
 		this._renderer.setDataRectangles(this._dataRectangles);
+		this._renderer.setText(this._dataText);
 
 		return this._renderer;
 	}
@@ -452,11 +465,67 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 		}
 	}
 
+	private _makeValidText(): void {
+		const priceScale = this._series.priceScale();
+		const timeScale = this._model.timeScale();
+		const seriesText = this._series.indexedText();
+		if (this._dataInvalidatedText) {
+			this._dataText.items = seriesText.map<SeriesTextRendererDataItem>((text: SeriesText<TimePointIndex>) => ({
+				time: text.time,
+				price: text.price,
+				x: 0 as Coordinate,
+				y: 0 as Coordinate,
+				text: text.text,
+				font: text.font,
+				color: text.color,
+				textAlign: text.textAlign,
+				textBaseline: text.textBaseline,
+				maxWidth: text.maxWidth
+			}));
+			this._dataInvalidatedText = false;
+		}
+
+		this._dataText.visibleRange = [];
+		const visibleBars = timeScale.visibleStrictRange();
+		if (visibleBars === null) {
+			return;
+		}
+
+		const firstValue = this._series.firstValue();
+		if (firstValue === null) {
+			return;
+		}
+		if (this._dataText.items.length === 0) {
+			return;
+		}
+
+		for (let index = 0; index < this._dataText.items.length; index++) {
+			const txt = seriesText[index];
+
+			// don't render if outside of screen
+			const tooFarLeft = txt.time < visibleBars.left();
+			if (tooFarLeft)
+				continue;
+
+			const tooFarRight = txt.time > visibleBars.right();
+			if (tooFarRight)
+				continue;
+
+			this._dataText.visibleRange.push(index);
+
+			const rendererItem = this._dataText.items[index];
+
+			rendererItem.x = timeScale.indexToCoordinate(txt.time);
+			rendererItem.price = priceScale.priceToCoordinate(txt.price, firstValue.value);
+		}
+	}
+
 	protected _makeValid(): void {
 		this._makeValidMarkers();
 		this._makeValidHorizLines();
 		this._makeValidVertLines();
 		this._makeValidRectangles();
+		this._makeValidText();
 		this._invalidated = false;
 	}
 }

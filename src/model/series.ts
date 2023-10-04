@@ -45,7 +45,7 @@ import { PriceRangeImpl } from './price-range-impl';
 import { PriceScale } from './price-scale';
 import { ISeriesBarColorer, SeriesBarColorer } from './series-bar-colorer';
 import { createSeriesPlotList, SeriesPlotList, SeriesPlotRow } from './series-data';
-import { InternalSeriesMarker, SeriesHorizLine, SeriesMarker, SeriesRectangle, SeriesVertLine } from './series-markers';
+import { InternalSeriesMarker, SeriesHorizLine, SeriesMarker, SeriesRectangle, SeriesText, SeriesVertLine } from './series-markers';
 import {
 	AreaStyleOptions,
 	BaselineStyleOptions,
@@ -142,6 +142,7 @@ export interface ISeries<T extends SeriesType> extends IPriceDataSource {
 	indexedHorizLines(): SeriesHorizLine<TimePointIndex>[];
 	indexedVertLines(): SeriesVertLine<TimePointIndex>[];
 	indexedRectangles(): SeriesRectangle<TimePointIndex>[];
+	indexedText(): SeriesText<TimePointIndex>[];
 	barColorer(): ISeriesBarColorer<T>;
 	markerDataAtIndex(index: TimePointIndex): MarkerData | null;
 	dataAt(time: TimePointIndex): SeriesDataAtTypeMap[SeriesType] | null;
@@ -162,8 +163,10 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 	private readonly _options: SeriesOptionsInternal<T>;
 	private _markers: readonly SeriesMarker<InternalHorzScaleItem>[] = [];
 	private _horizLines: SeriesHorizLine<UTCTimestamp>[] = [];
+	private _text: SeriesText<UTCTimestamp>[] = [];
 	private _vertLines: SeriesVertLine<UTCTimestamp>[] = [];
 	private _rectangles: SeriesRectangle<UTCTimestamp>[] = [];
+	private _indexedText: SeriesText<TimePointIndex>[] = [];
 	private _indexedMarkers: InternalSeriesMarker<TimePointIndex>[] = [];
 	private _indexedHorizLines: SeriesHorizLine<TimePointIndex>[] = [];
 	private _indexedVertLines: SeriesVertLine<TimePointIndex>[] = [];
@@ -303,6 +306,9 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 
 		this._recalculateMarkers();
 		this._recalculateHorizLines();
+		this._recalculateVertLines();
+		this._recalculateRectangles();
+		this._recalculateText();
 
 		this._paneView.update('data');
 		this._markersPaneView.update('data');
@@ -366,6 +372,17 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 		this.model().lightUpdate();
 	}
 
+	public setText(data: SeriesText<UTCTimestamp>[]): void {
+		this._text = data;
+		this._recalculateText();
+		const sourcePane = this.model().paneForSource(this);
+		this._markersPaneView.update('data');
+		this.model().recalculatePane(sourcePane);
+		this.model().updateSource(this);
+		this.model().updateCrosshair();
+		this.model().lightUpdate();
+	}
+
 	public markers(): readonly SeriesMarker<InternalHorzScaleItem>[] {
 		return this._markers;
 	}
@@ -380,6 +397,14 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 
 	public rectangles(): SeriesRectangle<UTCTimestamp>[] {
 		return this._rectangles;
+	}
+
+	public text(): SeriesText<UTCTimestamp>[] {
+		return this._text;
+	}
+
+	public indexedText(): SeriesText<TimePointIndex>[] {
+		return this._indexedText;
 	}
 
 	public indexedMarkers(): InternalSeriesMarker<TimePointIndex>[] {
@@ -874,6 +899,34 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 				priceHigh: vertLine.priceHigh,
 				priceLow: vertLine.priceLow,
 				lineStyle: vertLine.lineStyle
+			};
+		});
+	}
+
+	private _recalculateText(): void {
+		const timeScale = this.model().timeScale();
+		if (!timeScale.hasPoints() || this._data.isEmpty()) {
+			this._indexedText = [];
+			return;
+		}
+
+		const firstDataIndex = ensureNotNull(this._data.firstIndex());
+
+		this._indexedText = this._text.map<SeriesText<TimePointIndex>>((text: SeriesText<UTCTimestamp>, index: number) => {
+
+			const timePointIndex = ensureNotNull(timeScale.timeUtcToIndex(text.time, true));
+			const searchMode = timePointIndex < firstDataIndex ? MismatchDirection.NearestRight : MismatchDirection.NearestLeft;
+			const seriesDataIndex = ensureNotNull(this._data.search(timePointIndex, searchMode)).index;
+
+			return {
+				time: seriesDataIndex,
+				price: text.price,
+				text: text.text,
+				font: text.font,
+				color: text.color,
+				textAlign: text.textAlign,
+				textBaseline: text.textBaseline,
+				maxWidth: text.maxWidth
 			};
 		});
 	}

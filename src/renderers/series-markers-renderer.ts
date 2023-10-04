@@ -25,6 +25,19 @@ export interface SeriesMarkerText {
 	height: number;
 }
 
+export interface SeriesTextRendererDataItem extends TimedValue {
+	x: Coordinate;
+	y: Coordinate;
+	time: TimePointIndex;
+	price: number;
+	text: string;
+	font: string;
+	color: string;
+	textAlign: CanvasTextAlign;
+	textBaseline: CanvasTextBaseline;
+	maxWidth: number;
+}
+
 export interface SeriesMarkerRendererDataItem extends TimedValue {
 	y: Coordinate;
 	size: number;
@@ -68,6 +81,11 @@ export interface SeriesRectangleRendererDataItem {
 	borderColor?: string;
 }
 
+export interface SeriesTextRendererData {
+	items: SeriesTextRendererDataItem[];
+	visibleRange: number[];
+}
+
 export interface SeriesMarkerRendererData {
 	items: SeriesMarkerRendererDataItem[];
 	visibleRange: SeriesItemsIndexesRange | null;
@@ -90,6 +108,7 @@ export interface SeriesRectangleRendererData {
 
 export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 	private _data: SeriesMarkerRendererData | null = null;
+	private _dataText: SeriesTextRendererData | null = null;
 	private _dataHorizLines: SeriesHorizLineRendererData | null = null;
 	private _dataVertLines: SeriesVertLineRendererData | null = null;
 	private _dataRectangles: SeriesRectangleRendererData | null = null;
@@ -97,6 +116,10 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 	private _fontSize: number = -1;
 	private _fontFamily: string = '';
 	private _font: string = '';
+
+	public setDataText(data: SeriesTextRendererData): void {
+		this._dataText = data;
+	}
 
 	public setDataMarkers(data: SeriesMarkerRendererData): void {
 		this._data = data;
@@ -112,6 +135,10 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 
 	public setDataRectangles(data: SeriesRectangleRendererData): void {
 		this._dataRectangles = data;
+	}
+
+	public setText(data: SeriesTextRendererData): void {
+		this._dataText = data;
 	}
 
 	public setParams(fontSize: number, fontFamily: string): void {
@@ -139,6 +166,25 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 		}
 
 		return null;
+	}
+
+	private _drawImplText(ctx: CanvasRenderingContext2D, isHovered: boolean, hitTestData?: unknown): void {
+		if (this._dataText === null || this._dataText.visibleRange === null) {
+			return;
+		}
+
+		for (let i = 0; i < this._dataText.items.length; i++) {
+			if (!this._dataText.visibleRange.includes(i))
+				continue;
+
+			const item = this._dataText.items[i];
+
+			ctx.textBaseline = item.textBaseline;
+			ctx.textAlign = item.textAlign;
+			ctx.font = item.font;
+			ctx.fillStyle = item.color;
+			ctx.fillText(item.text, item.x, item.y, item.maxWidth)
+		}
 	}
 
 	private _drawImplMarkers(ctx: CanvasRenderingContext2D, isHovered: boolean, hitTestData?: unknown): void {
@@ -235,6 +281,7 @@ export class SeriesMarkersRenderer extends MediaCoordinatesPaneRenderer {
 	}
 
 	protected _drawImpl({ context: ctx }: MediaCoordinatesRenderingScope, isHovered: boolean, hitTestData?: unknown): void {
+		this._drawImplText(ctx, isHovered, hitTestData);
 		this._drawImplMarkers(ctx, isHovered, hitTestData);
 		this._drawImplVertLines(ctx, isHovered, hitTestData);
 		this._drawImplRectangles(ctx, isHovered, hitTestData);
