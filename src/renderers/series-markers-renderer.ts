@@ -35,7 +35,7 @@ export interface SeriesTextRendererDataItem extends TimedValue {
 	color: string;
 	textAlign: CanvasTextAlign;
 	textBaseline: CanvasTextBaseline;
-	maxWidth: number;
+	maxWidth?: number;
 }
 
 export interface SeriesMarkerRendererDataItem extends TimedValue {

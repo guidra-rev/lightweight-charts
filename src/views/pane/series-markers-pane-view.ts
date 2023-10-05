@@ -516,7 +516,7 @@ export class SeriesMarkersPaneView implements IUpdatablePaneView {
 			const rendererItem = this._dataText.items[index];
 
 			rendererItem.x = timeScale.indexToCoordinate(txt.time);
-			rendererItem.price = priceScale.priceToCoordinate(txt.price, firstValue.value);
+			rendererItem.y = priceScale.priceToCoordinate(txt.price, firstValue.value);
 		}
 	}
 

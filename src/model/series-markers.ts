@@ -125,17 +125,6 @@ export interface SeriesVertLine<TimeType> {
 	lineStyle: LineStyle;
 }
 
-export interface SeriesText<TimeType> {
-	time: TimeType;
-	price: number;
-	text: string;
-	color: string;
-	font: string;
-	textAlign: CanvasTextAlign;
-	textBaseline: CanvasTextBaseline;
-	maxWidth: number;
-}
-
 export interface SeriesRectangle<TimeType> {
 	time1: TimeType;
 	time2: TimeType;
@@ -153,7 +142,7 @@ export interface SeriesText<TimeType> {
 	font: string;
 	textAlign: CanvasTextAlign;
 	textBaseline: CanvasTextBaseline;
-	maxWidth: number;
+	maxWidth?: number;
 }
 
 export interface InternalSeriesMarker<TimeType> extends SeriesMarker<TimeType> {
