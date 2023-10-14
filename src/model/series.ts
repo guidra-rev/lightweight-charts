@@ -827,8 +827,7 @@ export class Series<T extends SeriesType> extends PriceDataSource implements IDe
 				internalId: index,
 				text: marker.text,
 				size: marker.size,
-				originalTime: marker.originalTime,
-				lineStyle: marker.lineStyle
+				originalTime: marker.originalTime
 			};
 		});
 	}

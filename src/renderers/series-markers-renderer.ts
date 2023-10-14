@@ -46,7 +46,6 @@ export interface SeriesMarkerRendererDataItem extends TimedValue {
 	internalId: number;
 	externalId?: string;
 	text?: SeriesMarkerText;
-	lineStyle: LineStyle;
 }
 
 export interface SeriesHorizLineRendererDataItem {

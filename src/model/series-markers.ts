@@ -46,11 +46,6 @@ export interface SeriesMarker<TimeType> {
 	size?: number;
 
 	/**
-	 * Style for vertical line
-	 */
-	lineStyle: LineStyle;
-
-	/**
 	 * @internal
 	 */
 	originalTime: unknown;
